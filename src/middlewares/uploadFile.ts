@@ -1,72 +1,102 @@
+import { Request, Response, NextFunction } from "express";
 import multer, { StorageEngine, FileFilterCallback } from "multer";
 import fs from "fs";
-import { Request } from "express";
+import path from "path";
 
-export const uploadFile = () => {
-  const storage: StorageEngine = multer.diskStorage({
-    destination: (
-      req: Request,
-      file: Express.Multer.File,
-      cb: (error: Error | null, destination: string) => void
-    ) => {
-      let uploadPath = "";
-      if (file.fieldname === "audio") {
-        uploadPath = "uploads/podcast/audio";
-      } else if (file.fieldname === "coverPhoto") {
-        uploadPath = "uploads/podcast/coverPhoto";
-      }
+const audioDirectory = "uploads/podcast/audio";
+const coverDirectory = "uploads/podcast/cover";
 
-      try {
-        if (!fs.existsSync(uploadPath)) {
-          fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-      } catch (err) {
-        cb(new Error("Could not create upload directory"), "");
-      }
-    },
-    filename: (
-      req: Request,
-      file: Express.Multer.File,
-      cb: (error: Error | null, filename: string) => void
-    ) => {
-      const name = `${Date.now()}-${file.originalname}`;
-      cb(null, name);
-    },
-  });
+const ensureDirectoryExists = (directory: string) => {
+  if (!fs.existsSync(directory)) {
+    fs.mkdirSync(directory, { recursive: true });
+  }
+};
 
-  const fileFilter = (
+ensureDirectoryExists(audioDirectory);
+ensureDirectoryExists(coverDirectory);
+
+const storage: StorageEngine = multer.diskStorage({
+  destination: (
     req: Request,
     file: Express.Multer.File,
-    cb: FileFilterCallback
+    cb: (error: Error | null, destination: string) => void
   ) => {
-    const allowedFieldnames = ["audio", "coverPhoto"];
-    const allowedMimeTypes = [
-      "audio/mpeg",
-      "image/jpeg",
-      "image/png",
-      "image/jpg",
-      "image/webp",
-    ];
-
-    if (allowedFieldnames.includes(file.fieldname)) {
-      if (allowedMimeTypes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error("Invalid file type"));
-      }
+    if (file.fieldname === "audio") {
+      cb(null, audioDirectory);
+    } else if (file.fieldname === "cover") {
+      cb(null, coverDirectory);
     } else {
-      cb(new Error("Invalid fieldname"));
+      cb(new Error("Invalid file field"), "");
     }
+  },
+  filename: (
+    req: Request,
+    file: Express.Multer.File,
+    cb: (error: Error | null, filename: string) => void
+  ) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
+
+const fileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback
+) => {
+  const allowedTypes: Record<string, RegExp> = {
+    audio: /mp3|wav|m4a|mpeg/,
+    cover: /jpeg|jpg|png|gif/,
   };
 
-  const upload = multer({
-    storage,
-    fileFilter,
-  }).fields([
-    { name: "coverPhoto", maxCount: 5 },
-    { name: "audio", maxCount: 10 },
-  ]);
+  console.log(`File fieldname: ${file.fieldname}`);
+  console.log(`File originalname: ${file.originalname}`);
+  console.log(`File mimetype: ${file.mimetype}`);
 
-  return upload;
+  const allowedType = allowedTypes[file.fieldname];
+  if (allowedType) {
+    const extname = allowedType.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+    const mimetype = allowedType.test(file.mimetype);
+
+    if (extname && mimetype) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Only ${file.fieldname} files are allowed!`));
+    }
+  } else {
+    cb(new Error("Invalid file field"));
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+});
+
+const uploadMiddleware = upload.fields([
+  { name: "audio", maxCount: 1 },
+  { name: "cover", maxCount: 1 },
+]);
+
+export const handleFileUpload = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  uploadMiddleware(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ error: err.message });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
 };
