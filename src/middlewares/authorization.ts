@@ -13,7 +13,7 @@ type Decoded = {
   id: string;
 };
 
-const decode = async (
+export const decode = async (
   token: string
 ): Promise<[Error | null, DecodedUser | null]> => {
   let error, auth, user, creator;

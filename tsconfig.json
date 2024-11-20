@@ -11,6 +11,7 @@
     "paths": {
       "@connection/*": ["src/connection/*"],
       "@controllers/*": ["src/controllers/*"],
+      "@events/*": ["src/events/*"],
       "@middlewares/*": ["src/middlewares/*"],
       "@models/*": ["src/models/*"],
       "@routers/*": ["src/routers/*"],
