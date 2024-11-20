@@ -56,6 +56,7 @@ const register = async (
     Auth.create({
       email,
       password: hashedPassword,
+      role,
       verificationOTP,
       verificationOTPExpire,
     })

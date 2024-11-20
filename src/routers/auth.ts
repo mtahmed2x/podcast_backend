@@ -1,6 +1,6 @@
 import AuthController from "@controllers/auth";
 import express from "express";
-import authorize from "@middlewares/authorization";
+import { authorize } from "@middlewares/authorization";
 
 const authRouter = express.Router();
 
