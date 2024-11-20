@@ -7,10 +7,13 @@ export type PodcastDocument = Document & {
   title: string;
   description?: string;
   location: string;
-  coverPhoto?: string;
+  cover?: string;
+  coverFormat?: string;
+  coverSize?: number;
   audio: string;
-  duration: number;
-  size: number;
+  audioFormat: string;
+  audioDuration: number;
+  audioSize: number;
   totalLikes: number;
   totalViews: number;
   totalComments: number;
@@ -49,18 +52,28 @@ const podcastSchema = new Schema<PodcastDocument>(
       type: String,
       required: true,
     },
-    coverPhoto: {
+    cover: {
       type: String,
+    },
+    coverFormat: {
+      type: String,
+    },
+    coverSize: {
+      type: Number,
     },
     audio: {
       type: String,
       required: true,
     },
-    duration: {
+    audioDuration: {
       type: Number,
       required: true,
     },
-    size: {
+    audioFormat: {
+      type: String,
+      required: true,
+    },
+    audioSize: {
       type: Number,
       required: true,
     },
