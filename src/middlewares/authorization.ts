@@ -65,7 +65,7 @@ const decode = async (
   return [null, data];
 };
 
-const authorize = () => {
+export const authorize = () => {
   return async (
     req: Request,
     res: Response,
@@ -82,5 +82,3 @@ const authorize = () => {
     next();
   };
 };
-
-export default authorize;
