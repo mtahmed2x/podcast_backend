@@ -52,10 +52,6 @@ const fileFilter = (
     cover: /jpeg|jpg|png|gif/,
   };
 
-  console.log(`File fieldname: ${file.fieldname}`);
-  console.log(`File originalname: ${file.originalname}`);
-  console.log(`File mimetype: ${file.mimetype}`);
-
   const allowedType = allowedTypes[file.fieldname];
   if (allowedType) {
     const extname = allowedType.test(

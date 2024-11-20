@@ -9,6 +9,6 @@ authRouter.post("/activate", AuthController.activate);
 authRouter.post("/login", AuthController.login);
 authRouter.post("/forgot-password", AuthController.forgotPassword);
 authRouter.post("/recover-password", AuthController.recoverPassword);
-authRouter.post("/change-password", authorize(), AuthController.changePassword);
+authRouter.post("/change-password", authorize, AuthController.changePassword);
 
 export default authRouter;

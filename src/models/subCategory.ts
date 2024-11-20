@@ -1,4 +1,3 @@
-import { NextFunction } from "express";
 import { Document, Schema, Types, model } from "mongoose";
 
 export type SubCategoryDocument = Document & {

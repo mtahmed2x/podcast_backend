@@ -1,8 +1,15 @@
 import to from "await-to-ts";
 import { Request, Response } from "express";
 import { getAudioMetadata, getImageMetadata } from "@utils/extractMetadata";
-import handleError from "@utils/handleError";
+import path from "path";
+import fs from "fs";
+
 import Podcast from "@models/podcast";
+import Category from "@models/category";
+import SubCategory from "@models/subCategory";
+import Creator from "@models/creator";
+
+import handleError from "@utils/handleError";
 
 type PodcastFileFields = {
   audio: Express.Multer.File[];
@@ -19,7 +26,11 @@ type PodcastRequest = Request<{}, {}, PodcastPayload> & {
   files: PodcastFileFields;
 };
 
-const createPodcast = async (req: Request, res: Response): Promise<any> => {
+type Params = {
+  id: string;
+};
+
+const create = async (req: Request, res: Response): Promise<any> => {
   const podcastReq = req as PodcastRequest;
   const creatorId = req.user.creatorId;
   const { audio, cover } = podcastReq.files;
@@ -50,13 +61,158 @@ const createPodcast = async (req: Request, res: Response): Promise<any> => {
   );
   if (error) return handleError(error, res);
 
+  let updateError;
+  [updateError] = await to(
+    Creator.findByIdAndUpdate(creatorId, { $push: { podcasts: podcast._id } })
+  );
+  if (updateError) {
+    await Podcast.findByIdAndDelete(podcast._id);
+    return handleError(updateError, res);
+  }
+  [updateError] = await to(
+    Category.findByIdAndUpdate(categoryId, { $push: { podcasts: podcast._id } })
+  );
+  if (updateError) {
+    await Podcast.findByIdAndDelete(podcast._id);
+    return handleError(updateError, res);
+  }
+  [updateError] = await to(
+    SubCategory.findByIdAndUpdate(subCategoryId, {
+      $push: { podcasts: podcast._id },
+    })
+  );
+  if (updateError) {
+    await Podcast.findByIdAndDelete(podcast._id);
+    return handleError(updateError, res);
+  }
+
   return res.status(201).json({
     message: "Podcast created.",
     data: podcast,
   });
 };
+
+const getAll = async (req: Request, res: Response): Promise<any> => {
+  const [error, podcasts] = await to(Podcast.find().populate("creator"));
+  if (error) return handleError(error, res);
+  return res.status(200).json({
+    message: "Successfully fetched all podcasts",
+    data: podcasts,
+  });
+};
+
+const getById = async (req: Request<Params>, res: Response): Promise<any> => {
+  const { id } = req.params;
+  const [error, podcast] = await to(Podcast.findById(id));
+  if (error) return handleError(error, res);
+  return res.status(200).json({
+    message: "Successfully fetched the podcast",
+    data: podcast,
+  });
+};
+
+const update = async (req: Request, res: Response): Promise<any> => {
+  const podcastReq = req as PodcastRequest;
+  let error;
+  const { id } = req.params;
+  const { cover } = podcastReq.files;
+  const { categoryId, subCategoryId, title, description, location } =
+    podcastReq.body;
+
+  const updateFields: {
+    category?: string;
+    subCategory?: string;
+    title?: string;
+    description?: string;
+    location?: string;
+    cover?: string;
+  } = {};
+
+  if (categoryId) {
+    let category;
+    [error, category] = await to(Category.findById(categoryId));
+    if (error) handleError(error, res);
+    if (!category)
+      return res.status(404).json({ error: "Category not found!" });
+    updateFields.category = categoryId;
+  }
+  if (subCategoryId) {
+    let subCategory;
+    [error, subCategory] = await to(SubCategory.findById(subCategoryId));
+    if (error) handleError(error, res);
+    if (!subCategory) {
+      return res.status(404).json({ error: "SubCategory not found!" });
+    }
+    updateFields.subCategory = subCategoryId;
+  }
+  if (title) updateFields.title = title;
+  if (description) updateFields.description = description;
+  if (location) updateFields.location = location;
+  if (cover) updateFields.cover = cover[0].path;
+
+  let podcast;
+  [error, podcast] = await to(
+    Podcast.findByIdAndUpdate(id, { $set: updateFields }, { new: true })
+  );
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(200).json({ message: "Podcast updated successfully", podcast });
+};
+
+const remove = async (req: Request<Params>, res: Response): Promise<any> => {
+  let error, podcast;
+  const { id } = req.params;
+  [error, podcast] = await to(Podcast.findById(id));
+  if (error) return handleError(error, res);
+  if (!podcast) return res.status(400).json({ error: "Podcast Not Found" });
+  const coverPath = path.resolve(podcast.cover!);
+  const audioPath = path.resolve(podcast.audio);
+
+  fs.unlink(coverPath, (err) => {
+    if (err) {
+      console.error("Failed to delete file:", err);
+      return res
+        .status(500)
+        .json({ error: "Failed to delete file from storage" });
+    }
+  });
+  fs.unlink(audioPath, (err) => {
+    if (err) {
+      console.error("Failed to delete file:", err);
+      return res
+        .status(500)
+        .json({ error: "Failed to delete file from storage" });
+    }
+  });
+
+  [error] = await to(
+    Creator.findByIdAndUpdate(podcast.creator, { $pull: { podcasts: id } })
+  );
+  if (error) return handleError(error, res);
+
+  [error] = await to(
+    Category.findByIdAndUpdate(podcast.category, { $pull: { podcasts: id } })
+  );
+  if (error) return handleError(error, res);
+
+  [error] = await to(
+    SubCategory.findByIdAndUpdate(podcast.subCategory, {
+      $pull: { podcasts: id },
+    })
+  );
+  if (error) return handleError(error, res);
+
+  [error] = await to(Podcast.findByIdAndDelete(id));
+  if (error) return handleError(error, res);
+
+  res.status(200).json({ message: "Podcast deleted successfully" });
+};
+
 const PodcastController = {
-  createPodcast,
+  create,
+  getAll,
+  getById,
+  update,
+  remove,
 };
 
 export default PodcastController;

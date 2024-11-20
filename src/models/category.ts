@@ -3,7 +3,7 @@ import { Document, Schema, Types, model } from "mongoose";
 export type CategoryDocument = Document & {
   title: string;
   subCategories: Types.ObjectId[];
-  podcasts: Types.ObjectId[];
+  podcasts?: Types.ObjectId[];
 };
 
 const categorySchema = new Schema<CategoryDocument>({

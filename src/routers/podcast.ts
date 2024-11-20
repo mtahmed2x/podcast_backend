@@ -2,19 +2,30 @@ import express from "express";
 import PodcastController from "@controllers/podcast";
 import { authorize } from "@middlewares/authorization";
 import { handleFileUpload } from "@middlewares/uploadFile";
+import {
+  categoryValidator,
+  subCategoryValidator,
+} from "@middlewares/docValidator";
 
 const router = express.Router();
 
 router.post(
   "/create",
-  authorize(),
+  authorize,
   handleFileUpload,
-  PodcastController.createPodcast
+  categoryValidator,
+  subCategoryValidator,
+  PodcastController.create
 );
-// router.get("/", PodcastController.getPodcast);
-// router.get("/:id", PodcastController.getPodcastById);
-// router.put("/update/:id", uploadFile(), PodcastController.updatePodcast);
-// router.delete("/delete/:id", PodcastController.deletePodcast);
+router.get("/", PodcastController.getAll);
+router.get("/:id", PodcastController.getById);
+router.put(
+  "/update/:id",
+  authorize,
+  handleFileUpload,
+  PodcastController.update
+);
+router.delete("/delete/:id", PodcastController.remove);
 
 // router.post(
 //   "/comment/:id",

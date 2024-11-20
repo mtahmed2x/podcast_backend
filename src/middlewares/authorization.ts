@@ -65,20 +65,18 @@ const decode = async (
   return [null, data];
 };
 
-export const authorize = () => {
-  return async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<any> => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer")) {
-      return res.status(403).json({ error: "Not authorized, token missing" });
-    }
-    const token = authHeader.split(" ")[1];
-    const [error, data] = await decode(token);
-    if (error) return handleError(error, res);
-    if (data) req.user = data;
-    next();
-  };
+export const authorize = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer")) {
+    return res.status(403).json({ error: "Not authorized, token missing" });
+  }
+  const token = authHeader.split(" ")[1];
+  const [error, data] = await decode(token);
+  if (error) return handleError(error, res);
+  if (data) req.user = data;
+  next();
 };
