@@ -207,19 +207,28 @@ const remove = async (req: Request<Params>, res: Response): Promise<any> => {
   res.status(200).json({ message: "Podcast deleted successfully" });
 };
 
-export const updateLike = async (
+export const updateLikeCount = async (
   podcastId: string,
   value: number
-): Promise<null | PodcastDocument> => {
+): Promise<number> => {
+  const podcast = await Podcast.findByIdAndUpdate(
+    podcastId,
+    { $inc: { totalLikes: value } },
+    { new: true }
+  );
+  return podcast!.totalLikes;
+};
+
+export const updateCommentCount = async (podcastId: string): Promise<void> => {
   const [error, podcast] = await to(
     Podcast.findByIdAndUpdate(
       podcastId,
-      { $inc: { totalLikes: value } },
+      { $inc: { totalComments: 1 } },
       { new: true }
     )
   );
-  if (error) return null;
-  else return podcast;
+  if (error) console.error(error);
+  if (!podcast) console.error("Failed to update podcast comment count");
 };
 
 const PodcastController = {

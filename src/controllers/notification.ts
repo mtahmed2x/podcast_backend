@@ -26,7 +26,7 @@ const setNotificationMessage = async (
   return message;
 };
 
-export const increaseLikeNotification = async (id: string, userId: string) => {
+export const addLikeNotification = async (id: string, userId: string) => {
   const podcast = await Podcast.findById(id);
 
   let notification = await Notification.findOne({
@@ -54,7 +54,7 @@ export const increaseLikeNotification = async (id: string, userId: string) => {
   console.log(notification);
 };
 
-export const decreaseLikeNotification = async (id: string, userId: string) => {
+export const removeLikeNotification = async (id: string, userId: string) => {
   const podcast = await Podcast.findById(id);
   let notification = await Notification.findOne({
     subject: "like",
@@ -78,9 +78,3 @@ export const decreaseLikeNotification = async (id: string, userId: string) => {
     console.log(notification);
   }
 };
-
-// const NotificationController = {
-//   increaseLikeNotification,
-//   decreaseLikeNotification,
-// };
-// export default NotificationController;
