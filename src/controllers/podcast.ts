@@ -4,7 +4,7 @@ import { getAudioMetadata, getImageMetadata } from "@utils/extractMetadata";
 import path from "path";
 import fs from "fs";
 
-import Podcast from "@models/podcast";
+import Podcast, { PodcastDocument } from "@models/podcast";
 import Category from "@models/category";
 import SubCategory from "@models/subCategory";
 import Creator from "@models/creator";
@@ -205,6 +205,21 @@ const remove = async (req: Request<Params>, res: Response): Promise<any> => {
   if (error) return handleError(error, res);
 
   res.status(200).json({ message: "Podcast deleted successfully" });
+};
+
+export const updateLike = async (
+  podcastId: string,
+  value: number
+): Promise<null | PodcastDocument> => {
+  const [error, podcast] = await to(
+    Podcast.findByIdAndUpdate(
+      podcastId,
+      { $inc: { totalLikes: value } },
+      { new: true }
+    )
+  );
+  if (error) return null;
+  else return podcast;
 };
 
 const PodcastController = {

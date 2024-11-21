@@ -1,7 +1,6 @@
 import { decode } from "@middlewares/authorization";
 import { likeToggle } from "@events/likeToggle";
 import { Server, Socket } from "socket.io";
-import handleError from "@utils/handleError";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -12,18 +11,18 @@ interface LikePodcastData {
   podcastId: string;
 }
 
-const initSocket = (server: any): void => {
+export const initSocket = (server: any): void => {
   io = new Server(server, {
     cors: {
-      origin: ["http://127.0.0.1:3001", "http://localhost:3001"],
+      origin: "*",
       methods: ["GET", "POST"],
     },
   });
 
   io.use(async (socket: Socket, next) => {
-    const token = socket.handshake.auth.token as string | undefined;
+    const token = socket.handshake.headers.access_token as string | undefined;
     if (!token) {
-      return next(new Error("Authentication error: Token required"));
+      return next(new Error("Authentication error: Toke required"));
     }
     const [error, user] = await decode(token);
 
@@ -59,11 +58,9 @@ const initSocket = (server: any): void => {
   });
 };
 
-const getIO = (): Server => {
+export const getIO = (): Server => {
   if (!io) {
     throw new Error("Socket.io not initialized");
   }
   return io;
 };
-
-export { initSocket, getIO };

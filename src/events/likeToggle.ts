@@ -1,13 +1,13 @@
 import Podcast from "@models/podcast";
 import Like from "@models/like";
 import { Server, Socket } from "socket.io";
-const { updateLike } = require("../podcast/podcast.controller");
+import { updateLike } from "@controllers/podcast";
 import {
   increaseLikeNotification,
   decreaseLikeNotification,
 } from "@controllers/notification";
 
-const to = require("await-to-js").default;
+import to from "await-to-ts";
 
 export const likeToggle = async (id: string, userId: string, io: Server) => {
   let podcast = await Podcast.findById(id);
@@ -20,8 +20,10 @@ export const likeToggle = async (id: string, userId: string, io: Server) => {
     await Like.deleteOne({ podcast: id, user: userId });
     value = -1;
   }
-  podcast = await updateLike(id, value);
-  if (value === 1) await increaseLikeNotification(id, userId);
-  if (value === -1) await decreaseLikeNotification(id, userId);
-  io.emit("likeUpdate", { totalLikes: podcast!.totalLikes });
+  const result = await updateLike(id, value);
+  if (result !== null) {
+    if (value === 1) await increaseLikeNotification(id, userId);
+    if (value === -1) await decreaseLikeNotification(id, userId);
+    io.emit("likeUpdate", { totalLikes: result.totalLikes });
+  }
 };
