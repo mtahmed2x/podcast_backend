@@ -30,6 +30,7 @@ const create = async (
 
   category.subCategories.push(subCategory._id as Types.ObjectId);
   [error] = await to(category.save());
+  console.log(category);
   if (error) return handleError(error, res);
 
   return res

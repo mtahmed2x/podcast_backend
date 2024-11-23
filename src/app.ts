@@ -6,6 +6,7 @@ import SubCategoryRouter from "@routers/subCategory";
 import PodcastRouter from "@routers/podcast";
 import PlanRouter from "@routers/plan";
 import UserRouter from "@routers/user";
+import CreatorRouter from "@routers/creator";
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.use("/sub-category", SubCategoryRouter);
 app.use("/podcast", PodcastRouter);
 app.use("/plan", PlanRouter);
 app.use("/user", UserRouter);
+app.use("/creator", CreatorRouter);
 
 export default app;

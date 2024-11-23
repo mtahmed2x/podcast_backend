@@ -19,14 +19,6 @@ const subCategorySchema = new Schema<SubCategoryDocument>({
   ],
 });
 
-// subCategorySchema.pre("findByIdAndDelete", async function (next: NextFunction) {
-//     const id = this.getQuery()._id;
-//     const subCategory = await this.model.findById(id);
-//     if (!subCategory) return next();
-//     await Podcast.deleteMany({ subCategory: id });
-//     next();
-//   });
-
 const SubCategory = model<SubCategoryDocument>(
   "SubCategory",
   subCategorySchema

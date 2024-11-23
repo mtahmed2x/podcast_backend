@@ -12,6 +12,6 @@ CategoryRouter.get(
   "/:id/sub-categories",
   CategoryController.getAllSubCategories
 );
-CategoryRouter.get("/:id/podcasts", CategoryController.getAllPodcasts);
+// CategoryRouter.get("/:id/podcasts", CategoryController.getAllPodcasts);
 
 export default CategoryRouter;

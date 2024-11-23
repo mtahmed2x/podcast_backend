@@ -26,7 +26,9 @@ const create = async (
 
 const getAll = async (req: Request, res: Response): Promise<any> => {
   const [error, categories] = await to(
-    Category.find().select("title subCategories").lean()
+    Category.find()
+      .populate({ path: "subCategories", select: "title" })
+      .select("title subCategories")
   );
   if (error) return handleError(error, res);
   return res.status(200).json({
@@ -70,7 +72,7 @@ const update = async (
 
 const remove = async (req: Request<Params>, res: Response): Promise<any> => {
   const id = req.params.id;
-  const [error, category] = await to(Category.findByIdAndDelete(id));
+  const [error, category] = await to(Category.findOneAndDelete({ _id: id }));
   if (error) return handleError(error, res);
   if (!category) return res.status(404).json({ error: "Category not found!" });
   return res.status(200).json({
@@ -95,19 +97,19 @@ const getAllSubCategories = async (
   });
 };
 
-const getAllPodcasts = async (
-  req: Request<Params>,
-  res: Response
-): Promise<any> => {
-  const id = req.params.id;
-  const [error, podcasts] = await to(
-    Category.findById(id).populate("podcasts").lean()
-  );
-  if (error) return handleError(error, res);
-  return res.status(200).json({
-    data: podcasts,
-  });
-};
+// const getAllPodcasts = async (
+//   req: Request<Params>,
+//   res: Response
+// ): Promise<any> => {
+//   const id = req.params.id;
+//   const [error, podcasts] = await to(
+//     Category.findById(id).populate("podcasts").lean()
+//   );
+//   if (error) return handleError(error, res);
+//   return res.status(200).json({
+//     data: podcasts,
+//   });
+// };
 
 const CategoryController = {
   create,
@@ -116,7 +118,7 @@ const CategoryController = {
   update,
   remove,
   getAllSubCategories,
-  getAllPodcasts,
+  // getAllPodcasts,
 };
 
 export default CategoryController;
