@@ -4,7 +4,7 @@ export type PlanDocument = Document & {
   name: string;
   description: string;
   unitAmount: number;
-  interval: "month" | "year" | "all-time";
+  interval: "day" | "week" | "month" | "year";
   productId: string;
   priceId: string;
 };
@@ -27,8 +27,7 @@ const planSchema = new Schema<PlanDocument>({
   interval: {
     type: String,
     required: true,
-    enum: ["month", "year", "all-time"],
-    default: "all-time",
+    enum: ["day", "week", "month", "year"],
   },
   productId: {
     type: String,

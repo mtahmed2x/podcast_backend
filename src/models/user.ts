@@ -14,7 +14,8 @@ export type DecodedUser = {
   authId: string;
   userId: string;
   name: string;
-  isActive: boolean;
+  isVerified: boolean;
+  isBlocked: boolean;
   email: string;
   role: "user" | "creator" | "admin";
   creatorId?: string;

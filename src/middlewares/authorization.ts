@@ -45,7 +45,8 @@ export const decode = async (
 
   const data: DecodedUser = {
     authId: auth._id!.toString(),
-    isActive: auth.isVerified,
+    isVerified: auth.isVerified,
+    isBlocked: auth.isBlocked,
     email: auth.email,
     role: auth.role,
     userId: user._id!.toString(),
