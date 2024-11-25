@@ -10,6 +10,7 @@ export type AuthDocument = Document & {
   verificationOTPExpire: Date | null;
   isVerified: boolean;
   isBlocked: boolean;
+  subscriptionType: string;
 };
 
 const authSchema = new Schema<AuthDocument>(
@@ -44,6 +45,10 @@ const authSchema = new Schema<AuthDocument>(
       type: Boolean,
       required: true,
       default: false,
+    },
+    subscriptionType: {
+      type: String,
+      default: "free",
     },
   },
   { timestamps: true }

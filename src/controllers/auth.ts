@@ -83,7 +83,7 @@ const register = async (
     const [creatorError, creator] = await to(
       Creator.create({
         auth: auth._id,
-        user: auth._id,
+        user: user._id,
       })
     );
     if (creatorError)

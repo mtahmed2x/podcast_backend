@@ -8,6 +8,8 @@ import PlanRouter from "@routers/plan";
 import UserRouter from "@routers/user";
 import CreatorRouter from "@routers/creator";
 import SubScriptionRouter from "@routers/subscription";
+import DashboardRouter from "@routers/dashboard";
+import { errorHandler } from "@utils/errorHandler";
 
 const app = express();
 
@@ -27,5 +29,8 @@ app.use("/plan", PlanRouter);
 app.use("subscription", SubScriptionRouter);
 app.use("/user", UserRouter);
 app.use("/creator", CreatorRouter);
+app.use("/dashboard", DashboardRouter);
+
+app.use(errorHandler);
 
 export default app;

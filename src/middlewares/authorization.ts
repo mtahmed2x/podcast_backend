@@ -3,6 +3,7 @@ import "dotenv/config";
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { DecodedUser } from "@models/user";
+import createHttpError from "http-errors";
 
 import Auth from "@models/auth";
 import User from "@models/user";
@@ -80,4 +81,28 @@ export const authorize = async (
   if (error) return handleError(error, res);
   if (data) req.user = data;
   next();
+};
+
+export const isAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  const user = req.user;
+  if (user.role === "admin") {
+    next();
+  }
+  next(createHttpError(403, "Access Denied. Only Admin Allowed"));
+};
+
+export const isCreator = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  const user = req.user;
+  if (user.role === "creator") {
+    next();
+  }
+  next(createHttpError(403, "Access Denied. Only Creator Allowed"));
 };

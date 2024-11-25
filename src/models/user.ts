@@ -7,7 +7,6 @@ export type UserDocument = Document & {
   gender: string;
   contact: string;
   address: string;
-  subscriptionType: string;
 };
 
 export type DecodedUser = {
@@ -45,10 +44,6 @@ const userSchema = new Schema<UserDocument>(
     address: {
       type: "String",
       required: true,
-    },
-    subscriptionType: {
-      type: String,
-      default: "free",
     },
   },
   { timestamps: true }
