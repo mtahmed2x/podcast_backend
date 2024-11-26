@@ -1,20 +1,30 @@
 import to from "await-to-ts";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import "dotenv/config";
-import Auth, { AuthDocument } from "@models/auth";
+import Auth, { AuthSchema } from "@models/auth";
 import User, { UserDocument } from "@models/user";
 import Creator, { CreatorDocument } from "@models/creator";
 import sendEmail from "@utils/sendEmail";
 import generateOTP from "@utils/generateOTP";
 import handleError from "@utils/handleError";
+import mongoose from "mongoose";
+import createError from "http-errors";
+import Admin, { AdminDocument } from "@models/admin";
 
-type AuthPayload = {
-  email: string;
-  password: string;
-  confirmPassword?: string;
-};
+type Register = Pick<
+  AuthSchema & UserDocument,
+  | "email"
+  | "password"
+  | "confirmPassword"
+  | "role"
+  | "name"
+  | "address"
+  | "dateOfBirth"
+>;
+
+type Login = Pick<AuthSchema, "email" | "password">;
 
 type UserPayload = {
   name: string;
@@ -38,15 +48,23 @@ type ChangePasswordPayload = {
 };
 
 const register = async (
-  req: Request<{}, {}, AuthPayload & UserPayload>,
-  res: Response
+  req: Request<{}, {}, Register>,
+  res: Response,
+  next: NextFunction
 ): Promise<any> => {
   const { name, email, role, dateOfBirth, address, password, confirmPassword } =
     req.body;
 
-  let [error, auth] = await to(Auth.findOne({ email }));
-  if (error) return handleError(error, res);
-  if (auth) return res.status(400).json({ error: "Email already exists" });
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  let error, auth, user;
+
+  [error, auth] = await to(Auth.findOne({ email }));
+  if (error) {
+    return next(error);
+  }
+  if (auth) return next(createError(400, "Email already exists"));
 
   const verificationOTP = generateOTP();
   const verificationOTPExpire = new Date(Date.now() + 1 * 60 * 1000);
@@ -57,42 +75,77 @@ const register = async (
       email,
       password: hashedPassword,
       role,
-      verificationOTP,
+      verificationOTP: verificationOTP,
       verificationOTPExpire,
     })
   );
-  if (error) return handleError(error, res);
+  if (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error(error);
+    return next(error);
+  }
 
-  const [userError, user] = await to(
+  [error, user] = await to(
     User.create({
-      auth: auth._id,
+      auth: auth!._id,
       name: name,
       dateOfBirth: dateOfBirth,
       address: address,
     })
   );
-  if (userError) return handleError(userError, res);
+  if (error) {
+    await session.abortTransaction();
+    session.endSession();
+    return next(error);
+  }
 
-  type ResponseData = [AuthDocument, UserDocument, CreatorDocument?];
-  const responseData: ResponseData = [
-    auth as AuthDocument,
-    user as UserDocument,
+  type ResponseData = [
+    AuthSchema,
+    UserDocument,
+    CreatorDocument?,
+    AdminDocument?
   ];
+  const responseData: ResponseData = [auth as AuthSchema, user as UserDocument];
 
-  if (role === "creator") {
-    const [creatorError, creator] = await to(
+  if (role === "CREATOR") {
+    let creator;
+    [error, creator] = await to(
       Creator.create({
         auth: auth._id,
         user: user._id,
       })
     );
-    if (creatorError)
-      return res.status(500).json({ error: creatorError.message });
+    if (error) {
+      await session.abortTransaction();
+      session.endSession();
+      return next(error);
+    }
 
     responseData.push(creator);
   }
 
+  if (role === "ADMIN") {
+    let admin;
+    [error, admin] = await to(
+      Admin.create({
+        auth: auth._id,
+        user: user._id,
+      })
+    );
+    if (error) {
+      await session.abortTransaction();
+      session.endSession();
+      return next(error);
+    }
+
+    responseData.push(admin);
+  }
+
   sendEmail(email, verificationOTP);
+
+  await session.commitTransaction();
+  session.endSession();
 
   return res.status(201).json({
     message: "Registration Successful. Verify your email.",
@@ -102,7 +155,7 @@ const register = async (
 
 const verifyEmail = async (
   payload: VerifyEmailPayload
-): Promise<[Error | null, AuthDocument | null]> => {
+): Promise<[Error | null, AuthSchema | null]> => {
   const { email, verificationOTP } = payload;
   let [error, auth] = await to(Auth.findOne({ email }));
   if (error) return [error, null];
@@ -138,7 +191,7 @@ const generateToken = (id: string): string => {
 };
 
 const login = async (
-  req: Request<{}, {}, AuthPayload>,
+  req: Request<{}, {}, Login>,
   res: Response
 ): Promise<any> => {
   const { email, password } = req.body;

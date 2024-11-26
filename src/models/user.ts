@@ -1,3 +1,4 @@
+import { Role } from "@shared/enums";
 import { Document, Schema, Types, model } from "mongoose";
 
 export type UserDocument = Document & {
@@ -16,7 +17,7 @@ export type DecodedUser = {
   isVerified: boolean;
   isBlocked: boolean;
   email: string;
-  role: "user" | "creator" | "admin";
+  role: Role;
   creatorId?: string;
 };
 

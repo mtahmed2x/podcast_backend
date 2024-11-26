@@ -1,28 +1,18 @@
 import createError from "http-errors";
-import { ErrorRequestHandler, Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 
-type CustomError = Error & {
-  code?: number;
-};
-
-export const errorHandler: ErrorRequestHandler = (
-  error: CustomError,
+export const errorHandler = async (
+  err: any,
   req: Request,
   res: Response,
   next: NextFunction
-) => {
-  if (error.code === 11000) {
-    return next(createError(400, error.message));
+): Promise<any> => {
+  if (createError.isHttpError(err)) {
+    console.error(`${err.message}\n${err.stack}\n${err.name}`);
+    return res.status(err.status).json({ error: err.message });
+  } else if (err.name === "ValidationError") {
+    return res.status(400).json({ error: err.message });
   }
-  if (error.name === "ValidationError") {
-    return next(createError(400, error.message));
-  }
-  if (error.name === "CastError") {
-    return next(createError(400, error.message));
-  }
-  if (error.name === "UnauthorizedError") {
-    return next(createError(401, error.message));
-  } else {
-    return next(createError(500, error.message));
-  }
+  console.error(`${err.message}\n${err.stack}\n${err.name}`);
+  return res.status(500).json({ error: err.message });
 };

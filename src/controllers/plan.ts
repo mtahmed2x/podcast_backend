@@ -15,6 +15,7 @@ const create = async (
   res: Response
 ): Promise<any> => {
   const { name, description, unitAmount, interval } = req.body;
+
   const [error, product] = await to(
     stripe.products.create({
       name: name!,
@@ -75,6 +76,7 @@ const update = async (
 ): Promise<any> => {
   const id = req.params.id;
   let { name, description, unitAmount, interval } = req.body;
+  console.log(req.body);
 
   const [error, plan] = await to(Plan.findById(id));
   if (error) return res.status(500).json({ error: error.message });

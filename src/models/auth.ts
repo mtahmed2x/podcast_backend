@@ -1,19 +1,13 @@
 import { Document, Schema, model } from "mongoose";
 import Creator from "@models/creator";
 import User from "@models/user";
+import { AuthValidatorSchema } from "@validator/input";
+import { z } from "zod";
+import { Role } from "@shared/enums";
 
-export type AuthDocument = Document & {
-  email: string;
-  password: string;
-  role: "user" | "admin" | "creator";
-  verificationOTP: string;
-  verificationOTPExpire: Date | null;
-  isVerified: boolean;
-  isBlocked: boolean;
-  subscriptionType: string;
-};
+export type AuthSchema = z.infer<typeof AuthValidatorSchema> & Document;
 
-const authSchema = new Schema<AuthDocument>(
+const authSchema = new Schema<AuthSchema>(
   {
     email: {
       type: String,
@@ -26,7 +20,7 @@ const authSchema = new Schema<AuthDocument>(
     },
     role: {
       type: String,
-      enum: ["user", "admin", "creator"],
+      enum: Role,
     },
     verificationOTP: {
       type: String,
@@ -63,5 +57,5 @@ authSchema.pre("findOneAndDelete", async function (next) {
   next();
 });
 
-const Auth = model<AuthDocument>("Auth", authSchema);
+const Auth = model<AuthSchema>("Auth", authSchema);
 export default Auth;

@@ -15,7 +15,8 @@
       "@middlewares/*": ["src/middlewares/*"],
       "@models/*": ["src/models/*"],
       "@routers/*": ["src/routers/*"],
-      "@types/*": ["src/types/*"],
+      "@shared/*": ["src/shared/*"],
+      "@validator/*": ["src/validator/*"],
       "@utils/*": ["src/utils/*"]
     }
   },

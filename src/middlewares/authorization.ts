@@ -53,8 +53,9 @@ export const decode = async (
     userId: user._id!.toString(),
     name: user.name,
   };
+  console.log(data);
 
-  if (auth.role === "creator") {
+  if (auth.role === "CREATOR") {
     [error, creator] = await to(Creator.findOne({ auth: auth._id }));
     if (error) return [error, null];
     if (!creator) {
@@ -89,10 +90,12 @@ export const isAdmin = async (
   next: NextFunction
 ): Promise<any> => {
   const user = req.user;
-  if (user.role === "admin") {
-    next();
+  console.log(user);
+
+  if (user.role === "ADMIN") {
+    return next();
   }
-  next(createHttpError(403, "Access Denied. Only Admin Allowed"));
+  return next(createHttpError(403, "Access Denied. Only Admin Allowed"));
 };
 
 export const isCreator = async (
@@ -101,7 +104,7 @@ export const isCreator = async (
   next: NextFunction
 ): Promise<any> => {
   const user = req.user;
-  if (user.role === "creator") {
+  if (user.role === "CREATOR") {
     next();
   }
   next(createHttpError(403, "Access Denied. Only Creator Allowed"));
