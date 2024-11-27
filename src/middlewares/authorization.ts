@@ -2,13 +2,13 @@ import to from "await-to-ts";
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
-import { DecodedUser } from "@models/user";
-import createHttpError from "http-errors";
+import createError from "http-errors";
 
 import Auth from "@models/auth";
 import User from "@models/user";
 import Creator from "@models/creator";
-import handleError from "@utils/handleError";
+import Admin from "@models/admin";
+import { DecodedUser } from "@type/schema";
 
 type Decoded = {
   id: string;
@@ -17,7 +17,7 @@ type Decoded = {
 export const decode = async (
   token: string
 ): Promise<[Error | null, DecodedUser | null]> => {
-  let error, auth, user, creator;
+  let error, auth, user, creator, admin;
 
   let decoded: Decoded;
   try {
@@ -27,43 +27,48 @@ export const decode = async (
   }
 
   [error, auth] = await to(
-    Auth.findById(decoded.id).select("email role isVerified")
+    Auth.findById(decoded.id).select("email role isVerified isBlocked")
   );
   if (error) return [error, null];
   if (!auth) {
-    error = new Error("Auth does not exist");
-    error.name = "NotFoundError";
+    error = createError(404, "User Not Found");
     return [error, null];
   }
 
   [error, user] = await to(User.findOne({ auth: auth._id }));
   if (error) return [error, null];
   if (!user) {
-    error = new Error("User does not exist");
-    error.name = "NotFoundError";
+    error = createError(404, "User Not Found");
     return [error, null];
   }
 
   const data: DecodedUser = {
     authId: auth._id!.toString(),
-    isVerified: auth.isVerified,
-    isBlocked: auth.isBlocked,
     email: auth.email,
     role: auth.role,
+    isVerified: auth.isVerified,
+    isBlocked: auth.isBlocked,
     userId: user._id!.toString(),
     name: user.name,
   };
-  console.log(data);
 
   if (auth.role === "CREATOR") {
     [error, creator] = await to(Creator.findOne({ auth: auth._id }));
     if (error) return [error, null];
     if (!creator) {
-      error = new Error("Creator does not exist");
-      error.name = "NotFoundError";
+      error = createError(404, "User Not Found");
       return [error, null];
     }
     data.creatorId = creator._id!.toString();
+  }
+  if (auth.role === "ADMIN") {
+    [error, admin] = await to(Admin.findOne({ auth: auth._id }));
+    if (error) return [error, null];
+    if (!admin) {
+      error = createError(404, "Admin Not Found");
+      return [error, null];
+    }
+    data.adminId = admin._id!.toString();
   }
   return [null, data];
 };
@@ -75,11 +80,11 @@ export const authorize = async (
 ): Promise<any> => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer")) {
-    return res.status(403).json({ error: "Not authorized, token missing" });
+    return next(createError(401, "Not Authorized"));
   }
   const token = authHeader.split(" ")[1];
   const [error, data] = await decode(token);
-  if (error) return handleError(error, res);
+  if (error) return next(error);
   if (data) req.user = data;
   next();
 };
@@ -90,12 +95,8 @@ export const isAdmin = async (
   next: NextFunction
 ): Promise<any> => {
   const user = req.user;
-  console.log(user);
-
-  if (user.role === "ADMIN") {
-    return next();
-  }
-  return next(createHttpError(403, "Access Denied. Only Admin Allowed"));
+  if (user.role === "ADMIN") return next();
+  return next(createError(403, "Access Denied. Only Admin Allowed"));
 };
 
 export const isCreator = async (
@@ -104,8 +105,6 @@ export const isCreator = async (
   next: NextFunction
 ): Promise<any> => {
   const user = req.user;
-  if (user.role === "CREATOR") {
-    next();
-  }
-  next(createHttpError(403, "Access Denied. Only Creator Allowed"));
+  if (user.role === "CREATOR") return next();
+  return next(createError(403, "Access Denied. Only Creator Allowed"));
 };

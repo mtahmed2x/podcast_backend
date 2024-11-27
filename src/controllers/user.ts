@@ -1,8 +1,9 @@
-import User, { UserDocument } from "@models/user";
+import User from "@models/user";
 import Auth from "@models/auth";
 import { Request, Response } from "express";
 import to from "await-to-ts";
 import handleError from "@utils/handleError";
+import { UserSchema } from "@type/schema";
 
 const display = async (req: Request, res: Response): Promise<any> => {
   const userId = req.user.userId;
@@ -17,7 +18,7 @@ type Param = {
 };
 
 const update = async (
-  req: Request<{}, {}, UserDocument>,
+  req: Request<{}, {}, UserSchema>,
   res: Response
 ): Promise<any> => {
   const userId = req.user.userId;
@@ -26,7 +27,7 @@ const update = async (
   if (error) return handleError(error, res);
   if (!user) return res.status(404).json({ error: "User Not found" });
 
-  const updateFields: Partial<UserDocument> = {};
+  const updateFields: Partial<UserSchema> = {};
   if (name) updateFields.name = name;
   if (dateOfBirth) updateFields.dateOfBirth = dateOfBirth;
   if (gender) updateFields.gender = gender;
@@ -43,19 +44,6 @@ const update = async (
   return res.status(200).json({ message: "Update successful", updatedUser });
 };
 
-const block = async (req: Request<Param>, res: Response): Promise<any> => {
-  let error, user;
-  const id = req.params.id;
-  [error, user] = await to(User.findById(id));
-  if (error) handleError(error, res);
-  if (!user) return res.status(404).json({ error: "User Not Found" });
-  [error] = await to(
-    Auth.findByIdAndUpdate(user.auth, { $set: { isBlocked: true } })
-  );
-  if (error) handleError(error, res);
-  return res.status(200).json({ message: "User successfully blocked" });
-};
-
 const remove = async (req: Request, res: Response): Promise<any> => {
   const user = req.user;
   const [error] = await to(Auth.findOneAndDelete({ _id: user.authId }));
@@ -66,7 +54,6 @@ const remove = async (req: Request, res: Response): Promise<any> => {
 const UserController = {
   display,
   update,
-  block,
   remove,
 };
 export default UserController;

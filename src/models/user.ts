@@ -1,27 +1,7 @@
-import { Role } from "@shared/enums";
-import { Document, Schema, Types, model } from "mongoose";
+import { UserSchema } from "@type/schema";
+import { Schema, model } from "mongoose";
 
-export type UserDocument = Document & {
-  auth: Types.ObjectId;
-  name: string;
-  dateOfBirth: string;
-  gender: string;
-  contact: string;
-  address: string;
-};
-
-export type DecodedUser = {
-  authId: string;
-  userId: string;
-  name: string;
-  isVerified: boolean;
-  isBlocked: boolean;
-  email: string;
-  role: Role;
-  creatorId?: string;
-};
-
-const userSchema = new Schema<UserDocument>(
+const userSchema = new Schema<UserSchema>(
   {
     auth: {
       type: Schema.Types.ObjectId,
@@ -50,5 +30,5 @@ const userSchema = new Schema<UserDocument>(
   { timestamps: true }
 );
 
-const User = model<UserDocument>("User", userSchema);
+const User = model<UserSchema>("User", userSchema);
 export default User;

@@ -17,7 +17,8 @@
       "@routers/*": ["src/routers/*"],
       "@shared/*": ["src/shared/*"],
       "@validator/*": ["src/validator/*"],
-      "@utils/*": ["src/utils/*"]
+      "@utils/*": ["src/utils/*"],
+      "@type/*": ["src/type/*"]
     }
   },
   "include": ["src/**/*.ts"],

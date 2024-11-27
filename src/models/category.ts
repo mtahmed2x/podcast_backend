@@ -1,12 +1,8 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
 import SubCategory from "@models/subCategory";
+import { CategorySchema } from "@type/schema";
 
-export type CategoryDocument = Document & {
-  title: string;
-  subCategories: Types.ObjectId[];
-};
-
-const categorySchema = new Schema<CategoryDocument>({
+const categorySchema = new Schema<CategorySchema>({
   title: {
     type: String,
     required: true,
@@ -28,5 +24,5 @@ categorySchema.pre("findOneAndDelete", async function (next) {
   next();
 });
 
-const Category = model<CategoryDocument>("Category", categorySchema);
+const Category = model<CategorySchema>("Category", categorySchema);
 export default Category;

@@ -3,18 +3,24 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import "dotenv/config";
-import Auth, { AuthSchema } from "@models/auth";
-import User, { UserDocument } from "@models/user";
-import Creator, { CreatorDocument } from "@models/creator";
+import Auth from "@models/auth";
+import {
+  AuthSchema,
+  AdminSchema,
+  CreatorSchema,
+  UserSchema,
+} from "@type/schema";
+import User from "@models/user";
+import Creator from "@models/creator";
 import sendEmail from "@utils/sendEmail";
 import generateOTP from "@utils/generateOTP";
 import handleError from "@utils/handleError";
 import mongoose from "mongoose";
 import createError from "http-errors";
-import Admin, { AdminDocument } from "@models/admin";
+import Admin from "@models/admin";
 
 type Register = Pick<
-  AuthSchema & UserDocument,
+  AuthSchema & UserSchema,
   | "email"
   | "password"
   | "confirmPassword"
@@ -100,13 +106,8 @@ const register = async (
     return next(error);
   }
 
-  type ResponseData = [
-    AuthSchema,
-    UserDocument,
-    CreatorDocument?,
-    AdminDocument?
-  ];
-  const responseData: ResponseData = [auth as AuthSchema, user as UserDocument];
+  type ResponseData = [AuthSchema, UserSchema, CreatorSchema?, AdminSchema?];
+  const responseData: ResponseData = [auth as AuthSchema, user as UserSchema];
 
   if (role === "CREATOR") {
     let creator;

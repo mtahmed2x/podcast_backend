@@ -1,4 +1,4 @@
-import User, { UserDocument } from "@models/user";
+import User from "@models/user";
 import Auth from "@models/auth";
 import Creator from "@models/creator";
 import { Request, Response, NextFunction } from "express";
@@ -8,7 +8,7 @@ import Admin from "@models/admin";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
-import { error } from "console";
+import { UserSchema } from "@type/schema";
 
 const displayAllUsers = async (
   req: Request,
@@ -20,7 +20,7 @@ const displayAllUsers = async (
       .populate({
         path: "auth",
         match: { role: "user" },
-        select: "email subscriptionType",
+        select: "email subscriptionType isBlocked",
       })
       .exec()
       .then((users) => users.filter((user) => user.auth))
@@ -37,7 +37,7 @@ const displayAllCreators = async (
   const [error, creators] = await to(
     Creator.find().populate({
       path: "user",
-      populate: { path: "auth", select: "email subscriptionType" },
+      populate: { path: "auth", select: "email subscriptionType isBlocked" },
     })
   );
   if (error) return next(error);
@@ -92,7 +92,7 @@ const updateProfile = async (
   const user = req.user;
   const { name, contact, address } = req.body;
 
-  const updateFields: Partial<UserDocument> = {};
+  const updateFields: Partial<UserSchema> = {};
   if (name) updateFields.name = name;
   if (contact) updateFields.contact = contact;
   if (address) updateFields.address = address;
@@ -109,18 +109,60 @@ const updateProfile = async (
     .json({ message: "Update successful", data: updatedUser });
 };
 
-// const changePassword = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<any> => {
-//   const user = req.user;
-//   const { password, newPassword, confirmPassword } = req.body;
-//   const auth = Auth.findById(user.authId);
-//   if (auth) {
-//     const isPasswordValid = await bcrypt.compare(password, auth.password);
-//   }
-// };
+const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  const user = req.user;
+  const { password, newPassword, confirmPassword } = req.body;
+  let [error, auth] = await to(Auth.findById(user.authId));
+  if (error) return next(error);
+  const isPasswordValid = await bcrypt.compare(password, auth!.password);
+  if (!isPasswordValid) return next(createError(400, "Incorrect Password"));
+  if (newPassword !== confirmPassword)
+    return next(createError(400, "Password's don't match"));
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  [error, auth] = await to(
+    Auth.findByIdAndUpdate(
+      user.authId,
+      { $set: { password: hashedPassword } },
+      { new: true }
+    )
+  );
+  if (error) return next(error);
+  res.status(200).json({ message: "Success" });
+};
+
+type Param = {
+  id: string;
+};
+
+const block = async (
+  req: Request<Param>,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  const id = req.params.id;
+  const [error] = await to(
+    Auth.findByIdAndUpdate(id, { $set: { isBlocked: true } })
+  );
+  if (error) next(error);
+  return res.status(200).json({ message: "Success" });
+};
+
+const unblock = async (
+  req: Request<Param>,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  const id = req.params.id;
+  const [error] = await to(
+    Auth.findByIdAndUpdate(id, { $set: { isBlocked: false } })
+  );
+  if (error) next(error);
+  return res.status(200).json({ message: "Success" });
+};
 
 const DashboardController = {
   displayAllUsers,
@@ -128,6 +170,9 @@ const DashboardController = {
   adminProfile,
   login,
   updateProfile,
+  changePassword,
+  block,
+  unblock,
 };
 
 export default DashboardController;

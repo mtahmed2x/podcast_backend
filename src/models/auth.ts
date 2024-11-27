@@ -1,11 +1,8 @@
-import { Document, Schema, model } from "mongoose";
+import { Schema, model } from "mongoose";
 import Creator from "@models/creator";
 import User from "@models/user";
-import { AuthValidatorSchema } from "@validator/input";
-import { z } from "zod";
 import { Role } from "@shared/enums";
-
-export type AuthSchema = z.infer<typeof AuthValidatorSchema> & Document;
+import { AuthSchema } from "@type/schema";
 
 const authSchema = new Schema<AuthSchema>(
   {

@@ -1,11 +1,7 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { AdminSchema } from "@type/schema";
+import { Schema, model } from "mongoose";
 
-export type AdminDocument = Document & {
-  auth: Types.ObjectId;
-  user: Types.ObjectId;
-};
-
-const AdminSchema = new Schema<AdminDocument>({
+const adminSchema = new Schema<AdminSchema>({
   auth: {
     type: Schema.Types.ObjectId,
     ref: "Auth",
@@ -18,5 +14,5 @@ const AdminSchema = new Schema<AdminDocument>({
   },
 });
 
-const Admin = model<AdminDocument>("Admin", AdminSchema);
+const Admin = model<AdminSchema>("Admin", adminSchema);
 export default Admin;
