@@ -1,0 +1,22 @@
+Thu Nov 28 2024 18:1:50 [TrackTrek] info: App listening on http://192.168.10.220:8000
+Thu Nov 28 2024 18:1:50 [TrackTrek] info: DB Connected Successfully at 11/28/2024, 6:01:50 PM
+Thu Nov 28 2024 18:2:2 [TrackTrek] info: App listening on http://192.168.10.220:8000
+Thu Nov 28 2024 18:2:2 [TrackTrek] info: DB Connected Successfully at 11/28/2024, 6:02:02 PM
+Thu Nov 28 2024 18:2:20 [TrackTrek] info: App listening Successfully on http://192.168.10.220:8000
+Thu Nov 28 2024 18:2:20 [TrackTrek] info: DB Connected Successfully at 11/28/2024, 6:02:20 PM
+Thu Nov 28 2024 18:2:39 [PodCast] info: App listening Successfully on http://192.168.10.220:8000
+Thu Nov 28 2024 18:2:39 [PodCast] info: DB Connected Successfully at 11/28/2024, 6:02:39 PM
+Thu Nov 28 2024 18:4:29 [PodCast] info: App listening Successfully on http://192.168.10.220:8000
+Thu Nov 28 2024 18:4:29 [PodCast] info: DB Connected Successfully at 127.0.0.1:27017
+Thu Nov 28 2024 18:4:44 [PodCast] info: App listening Successfully on http://192.168.10.220:8000
+Thu Nov 28 2024 18:4:44 [PodCast] info: DB Connected Successfully on 127.0.0.1:27017
+Thu Nov 28 2024 18:5:7 [PodCast] info: App listening Successfully on http://192.168.10.220:8000
+Thu Nov 28 2024 18:5:7 [PodCast] info: DB Connected Successfully on mongodb://127.0.0.1:27017
+Thu Nov 28 2024 18:7:39 [PodCast] [32minfo[39m: App listening Successfully on http://192.168.10.220:8000
+Thu Nov 28 2024 18:7:39 [PodCast] [32minfo[39m: DB Connected Successfully on mongodb://127.0.0.1:27017
+Thu Nov 28 2024 18:8:42 [PodCast] [32minfo[39m: App listening Successfully on http://192.168.10.220:8000
+Thu Nov 28 2024 18:8:42 [PodCast] [32minfo[39m: DB Connected Successfully on mongodb://127.0.0.1:27017
+Thu Nov 28 2024 18:9:35 [PodCast] [32minfo[39m: App listening Successfully on http://192.168.10.220:8000
+Thu Nov 28 2024 18:9:35 [PodCast] [32minfo[39m: DB Connected Successfully on mongodb://127.0.0.1:27017
+Thu Nov 28 2024 18:11:3 [PodCast] [32minfo[39m: App listening Successfully on http://192.168.10.220:8000
+Thu Nov 28 2024 18:11:3 [PodCast] [32minfo[39m: DB Connected Successfully on mongodb://127.0.0.1:27017

@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 
-import { errorHandler } from "@utils/errorHandler";
+import { errorHandler } from "@middlewares/errorHandler";
 
 import authRouter from "@routers/auth";
 import CategoryRouter from "@routers/category";
@@ -15,6 +15,7 @@ import DashboardRouter from "@routers/dashboard";
 import FaqRouter from "@routers/faq";
 import TaCRouter from "@routers/tac";
 import AboutRouter from "@routers/about";
+import notFound from "@middlewares/notfound";
 
 const app = express();
 
@@ -38,7 +39,7 @@ app.use("/dashboard", DashboardRouter);
 app.use("/faq", FaqRouter);
 app.use("/tac", TaCRouter);
 app.use("/about", AboutRouter);
-
+app.use(notFound);
 app.use(errorHandler);
 
 export default app;

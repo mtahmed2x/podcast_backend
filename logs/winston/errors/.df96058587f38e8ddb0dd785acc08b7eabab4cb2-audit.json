@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/mir/Projects/pod_cast_backend/logs/winston/errors/.df96058587f38e8ddb0dd785acc08b7eabab4cb2-audit.json",
+    "files": [
+        {
+            "date": 1732795102470,
+            "name": "/home/mir/Projects/pod_cast_backend/logs/winston/errors/um-2024-11-28-17-error.log",
+            "hash": "2f3faa0a018ce9c75841c8f0501d82387711ad1fbc4855eff9b95814a1c26366"
+        },
+        {
+            "date": 1732795310122,
+            "name": "/home/mir/Projects/pod_cast_backend/logs/winston/errors/um-2024-11-28-18-error.log",
+            "hash": "136ce3e8bdbb7f0e0964e26418ad4a18510d7474d82448cfb78278d38583f7af"
+        }
+    ],
+    "hashType": "sha256"
+}
