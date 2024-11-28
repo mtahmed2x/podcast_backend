@@ -5,6 +5,7 @@ import path from "path";
 
 const audioDirectory = "uploads/podcast/audio";
 const coverDirectory = "uploads/podcast/cover";
+const avatarDirectory = "uploads/profile/avatar";
 
 const ensureDirectoryExists = (directory: string) => {
   if (!fs.existsSync(directory)) {
@@ -25,6 +26,8 @@ const storage: StorageEngine = multer.diskStorage({
       cb(null, audioDirectory);
     } else if (file.fieldname === "cover") {
       cb(null, coverDirectory);
+    } else if (file.fieldname === "avatar") {
+      cb(null, avatarDirectory);
     } else {
       cb(new Error("Invalid file field"), "");
     }
@@ -50,6 +53,7 @@ const fileFilter = (
   const allowedTypes: Record<string, RegExp> = {
     audio: /mp3|wav|m4a|mpeg/,
     cover: /jpeg|jpg|png|gif/,
+    avatar: /jpeg|jpg|png|gif/,
   };
 
   const allowedType = allowedTypes[file.fieldname];
