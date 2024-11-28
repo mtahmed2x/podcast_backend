@@ -29,11 +29,10 @@ export const AuthValidatorSchema = z
     }
   });
 
-export const FaqValidatorSchema = z.object({
-  question: z.string(),
-  answer: z.string(),
+export const TaCValidatorSchema = z.object({
+  text: z.string(),
 });
 
-export const TermValidatorSchema = z.object({
+export const AboutValidatorSchema = z.object({
   text: z.string(),
 });

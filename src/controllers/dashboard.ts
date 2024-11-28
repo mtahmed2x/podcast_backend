@@ -61,7 +61,7 @@ const adminProfile = async (
 };
 
 const generateToken = (id: string): string => {
-  return jwt.sign({ id }, process.env.JWT_SECRET!, { expiresIn: "96h" });
+  return jwt.sign({ id }, process.env.JWT_ACCESS_SECRET!, { expiresIn: "96h" });
 };
 
 const login = async (
@@ -164,6 +164,59 @@ const unblock = async (
   return res.status(200).json({ message: "Success" });
 };
 
+const totalSubscriber = async (
+  req: Request<Param>,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  return res.status(200).json({ message: "Success", data: 20 });
+};
+
+const incomeByMonth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  const income = {
+    January: 3200,
+    February: 2800,
+    March: 3500,
+    April: 3000,
+    May: 4000,
+    June: 3200,
+    July: 3100,
+    August: 3300,
+    September: 3400,
+    October: 3700,
+    November: 3600,
+    December: 3800,
+  };
+  return res.status(200).json({ message: "Success", data: income });
+};
+
+const subscribersByMonth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  const subscribers = {
+    January: 1200,
+    February: 1150,
+    March: 1300,
+    April: 1400,
+    May: 1600,
+    June: 1550,
+    July: 1700,
+    August: 1800,
+    September: 1900,
+    October: 2000,
+    November: 2100,
+    December: 2200,
+  };
+
+  return res.status(200).json({ message: "Success", data: subscribers });
+};
+
 const DashboardController = {
   displayAllUsers,
   displayAllCreators,
@@ -173,6 +226,9 @@ const DashboardController = {
   changePassword,
   block,
   unblock,
+  totalSubscriber,
+  incomeByMonth,
+  subscribersByMonth,
 };
 
 export default DashboardController;

@@ -1,5 +1,7 @@
 import { Role } from "@shared/enums";
+import { AboutValidatorSchema, TaCValidatorSchema } from "@validator/input";
 import { Document, Types } from "mongoose";
+import { z } from "zod";
 
 export type AuthSchema = Document & {
   email: string;
@@ -49,3 +51,10 @@ export type CategorySchema = Document & {
   title: string;
   subCategories: Types.ObjectId[];
 };
+
+export type FaqSchema = Document & {
+  question: string;
+  answer: string;
+};
+export type TaCSchema = z.infer<typeof TaCValidatorSchema> & Document;
+export type AboutSchema = z.infer<typeof AboutValidatorSchema> & Document;

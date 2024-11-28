@@ -1,4 +1,3 @@
-import { decode } from "@middlewares/authorization";
 import { addOrRemoveLike } from "@events/like";
 import { addNewComment } from "@events/comment";
 import { updateLikeCount, updateCommentCount } from "@controllers/podcast";
@@ -7,9 +6,8 @@ import {
   removeLikeNotification,
 } from "@controllers/notification";
 import { Server, Socket } from "socket.io";
-import dotenv from "dotenv";
-
-dotenv.config();
+import "dotenv/config";
+import createError from "http-errors";
 
 let io: Server | undefined;
 
@@ -29,16 +27,18 @@ export const initSocket = (server: any): void => {
     },
   });
 
-  io.use(async (socket: Socket, next) => {
-    const token = socket.handshake.headers.access_token as string | undefined;
-    console.log(token);
-    if (!token) return next(new Error("Authentication error: No token found"));
-    const [error, user] = await decode(token);
-    console.log(user);
-    if (error) return next(new Error(error.message));
-    socket.data.user = user;
-    next();
-  });
+  // io.use(async (socket: Socket, next) => {
+  //   const token = socket.handshake.headers.access_token as string | undefined;
+  //   console.log(token);
+  //   if (!token) return next(new Error("Authentication error: No token found"));
+  //   if (!process.env.JWT_ACCESS_SECRET) {
+  //     return next(createError(500, "JWT secret is not defined."));
+  //   }
+  //   const [error, data] = await decode(token, process.env.JWT_SECRET);
+  //   if (error) return next(new Error(error.message));
+  //   socket.data.user = data;
+  //   next();
+  // });
 
   io.on("connection", (socket: Socket) => {
     const user = socket.data.user;

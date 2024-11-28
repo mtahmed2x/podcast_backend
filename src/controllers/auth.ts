@@ -18,6 +18,7 @@ import handleError from "@utils/handleError";
 import mongoose from "mongoose";
 import createError from "http-errors";
 import Admin from "@models/admin";
+import { generateToken } from "@utils/jwt";
 
 type Register = Pick<
   AuthSchema & UserSchema,
@@ -187,83 +188,104 @@ const activate = async (
   }
 };
 
-const generateToken = (id: string): string => {
-  return jwt.sign({ id }, process.env.JWT_SECRET!, { expiresIn: "96h" });
-};
-
 const login = async (
   req: Request<{}, {}, Login>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<any> => {
   const { email, password } = req.body;
   const [error, auth] = await to(Auth.findOne({ email }));
-  if (error) return handleError(error, res);
-  if (!auth) return res.status(404).json({ error: "Email don't exist" });
+  if (error) return next(error);
+  if (!auth) return next(createError(404, "Email don't exist"));
 
   const isPasswordValid = await bcrypt.compare(password, auth.password);
-  if (!isPasswordValid)
-    return res.status(401).json({ error: "Wrong password" });
-
+  if (!isPasswordValid) return next(createError(401, "Wrong password"));
   if (!auth.isVerified)
-    return res.status(401).json({ error: "Verify your email first" });
+    return next(createError(401, "Verify your email first"));
 
-  const token = generateToken(auth._id!.toString());
+  if (auth.isBlocked) return next(createError(403, "You are blocked"));
 
-  return res.status(200).json({ message: "Login Successful", token: token });
+  const accessSecret = process.env.JWT_ACCESS_SECRET;
+  const refreshSecret = process.env.JWT_REFRESH_SECRET;
+  if (!accessSecret || !refreshSecret) {
+    return next(createError(500, "JWT secret is not defined."));
+  }
+
+  const accessToken = generateToken(auth._id!.toString(), accessSecret, "10m");
+  const refreshToken = generateToken(
+    auth._id!.toString(),
+    refreshSecret,
+    "96h"
+  );
+
+  return res
+    .status(200)
+    .json({ message: "Success", data: [accessToken, refreshToken] });
 };
 
 const forgotPassword = async (
   req: Request<{}, {}, ForgotPasswordPayload>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<any> => {
   const { email } = req.body;
   const [error, auth] = await to(Auth.findOne({ email }));
-  if (error) return handleError(error, res);
-  if (!auth) return res.status(404).json({ error: "Auth not found" });
+  if (error) return next(error);
+  if (!auth) return next(createError(404, "User Not Found"));
   const verificationOTP = generateOTP();
   auth.verificationOTP = verificationOTP;
   auth.verificationOTPExpire = new Date(Date.now() + 1 * 60 * 1000);
   await auth.save();
   sendEmail(email, verificationOTP);
-  return res
-    .status(200)
-    .json({ message: "Verification Code sent. Check your mail" });
+  return res.status(200).json({ message: "Success. Verification mail sent." });
 };
 
-const recoverPassword = async (
+const verifyOTP = async (
   req: Request<{}, {}, VerifyEmailPayload>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<any> => {
   const [error, auth] = await verifyEmail(req.body);
   if (error) return handleError(error, res);
   if (auth) {
-    const token = generateToken(auth._id!.toString());
-    res.status(200).json({ recoveryToken: token });
+    const secret = process.env.JWT_RECOVERY_SECRET;
+    if (!secret) {
+      return next(createError(500, "JWT secret is not defined."));
+    }
+    const recoveryToken = generateToken(auth._id!.toString(), secret, "20m");
+    res.status(200).json({ message: "Success", data: recoveryToken });
   }
 };
 
 const changePassword = async (
   req: Request<{}, {}, ChangePasswordPayload>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<any> => {
   const { password, confirmPassword } = req.body;
   if (password !== confirmPassword)
-    return res.status(400).json({ error: "Passwords don't match" });
+    return next(createError(401, "Passwords don't match"));
   const user = req.user;
   const auth = await Auth.findById(user.authId!);
   if (auth) {
     auth!.password = await bcrypt.hash(password, 10);
     await auth.save();
   }
-  return res.status(200).json({ message: "Password changed" });
+  return res.status(200).json({ message: "Success. Password changed" });
 };
+
+const getAccessToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {};
 
 const AuthController = {
   register,
   activate,
   login,
   forgotPassword,
-  recoverPassword,
+  verifyOTP,
   changePassword,
 };
 

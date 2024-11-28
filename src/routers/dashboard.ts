@@ -15,8 +15,10 @@ router.put(
   isAdmin,
   DashboardController.changePassword
 );
-
 router.post("/block/:id", authorize, isAdmin, DashboardController.block);
 router.post("/unblock/:id", authorize, isAdmin, DashboardController.unblock);
+router.get("/income", DashboardController.incomeByMonth);
+router.get("/total-subscriber", DashboardController.totalSubscriber);
+router.get("/subscriber", DashboardController.subscribersByMonth);
 
 export default router;
