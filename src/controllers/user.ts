@@ -3,7 +3,7 @@ import Auth from "@models/auth";
 import { Request, Response } from "express";
 import to from "await-to-ts";
 import handleError from "@utils/handleError";
-import { UserSchema } from "@type/schema";
+import { UserSchema } from "@schemas/user";
 
 const display = async (req: Request, res: Response): Promise<any> => {
   const userId = req.user.userId;

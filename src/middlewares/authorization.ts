@@ -7,9 +7,10 @@ import Auth from "@models/auth";
 import User from "@models/user";
 import Creator from "@models/creator";
 import Admin from "@models/admin";
-import { DecodedUser } from "@type/schema";
+
 import { Role } from "@shared/enums";
 import { decodeToken } from "@utils/jwt";
+import {DecodedUser} from "@schemas/decodedUser";
 
 export const getUserInfo = async (
   authId: string
@@ -19,8 +20,9 @@ export const getUserInfo = async (
     Auth.findById(authId).select("email role isVerified isBlocked")
   );
   if (error || !auth) return null;
-
-  [error, user] = await to(User.findOne({ auth: auth._id }));
+  console.log(auth);
+  [error, user] = await to(User.findOne({ auth: authId }));
+  console.log(user);
   if (error || !user) return null;
 
   const data: DecodedUser = {
@@ -60,6 +62,7 @@ const authorizeToken = (secret: string, errorMessage: string) => {
     next: NextFunction
   ): Promise<any> => {
     const authHeader = req.headers.authorization;
+    console.log(authHeader);
     if (!authHeader || !authHeader.startsWith("Bearer")) {
       return next(createError(401, "Not Authorized"));
     }
@@ -70,9 +73,8 @@ const authorizeToken = (secret: string, errorMessage: string) => {
     }
 
     const [error, decoded] = decodeToken(token, secret);
-    if (error) return next(createError(500, "Internal Server Error"));
+    if (error) return next(error);
     if (!decoded) return next(createError(401, errorMessage));
-
     const data = await getUserInfo(decoded.id);
     if (!data) return next(createError(404, "User Not Found"));
 

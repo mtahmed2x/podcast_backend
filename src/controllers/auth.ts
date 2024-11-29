@@ -1,23 +1,20 @@
 import to from "await-to-ts";
 import { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import createError from "http-errors";
 import bcrypt from "bcrypt";
 import "dotenv/config";
+import {AuthSchema} from "../schemas/auth";
+import {UserSchema} from "../schemas/user";
+import {AdminSchema} from "../schemas/admin";
+import {CreatorSchema} from "../schemas/creator";
 import Auth from "@models/auth";
-import {
-  AuthSchema,
-  AdminSchema,
-  CreatorSchema,
-  UserSchema,
-} from "@type/schema";
 import User from "@models/user";
 import Creator from "@models/creator";
+import Admin from "@models/admin";
 import sendEmail from "@utils/sendEmail";
 import generateOTP from "@utils/generateOTP";
 import handleError from "@utils/handleError";
-import mongoose from "mongoose";
-import createError from "http-errors";
-import Admin from "@models/admin";
 import { generateToken } from "@utils/jwt";
 
 type Register = Pick<
@@ -88,7 +85,7 @@ const register = async (
   );
   if (error) {
     await session.abortTransaction();
-    session.endSession();
+    await session.endSession();
     console.error(error);
     return next(error);
   }
@@ -103,7 +100,7 @@ const register = async (
   );
   if (error) {
     await session.abortTransaction();
-    session.endSession();
+    await session.endSession();
     return next(error);
   }
 
@@ -120,7 +117,7 @@ const register = async (
     );
     if (error) {
       await session.abortTransaction();
-      session.endSession();
+      await session.endSession();
       return next(error);
     }
 
@@ -137,20 +134,19 @@ const register = async (
     );
     if (error) {
       await session.abortTransaction();
-      session.endSession();
+      await session.endSession();
       return next(error);
     }
 
     responseData.push(admin);
   }
 
-  sendEmail(email, verificationOTP);
-
+  await sendEmail(email, verificationOTP);
   await session.commitTransaction();
-  session.endSession();
+  await session.endSession();
 
   return res.status(201).json({
-    message: "Registration Successful. Verify your email.",
+    message: "Success",
     data: responseData,
   });
 };
@@ -236,7 +232,7 @@ const forgotPassword = async (
   auth.verificationOTP = verificationOTP;
   auth.verificationOTPExpire = new Date(Date.now() + 1 * 60 * 1000);
   await auth.save();
-  sendEmail(email, verificationOTP);
+  await sendEmail(email, verificationOTP);
   return res.status(200).json({ message: "Success. Verification mail sent." });
 };
 

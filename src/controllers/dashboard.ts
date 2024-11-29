@@ -8,7 +8,7 @@ import Admin from "@models/admin";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
-import { UserSchema } from "@type/schema";
+import { UserSchema } from "@schemas/user";
 
 const displayAllUsers = async (
   req: Request,

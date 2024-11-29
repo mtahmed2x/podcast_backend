@@ -1,11 +1,7 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
+import {SubCategorySchema} from "@schemas/subCategory";
 
-export type SubCategoryDocument = Document & {
-  title: string;
-  podcasts: Types.ObjectId[];
-};
-
-const subCategorySchema = new Schema<SubCategoryDocument>({
+const subCategorySchema = new Schema<SubCategorySchema>({
   title: {
     type: String,
     required: true,
@@ -19,7 +15,7 @@ const subCategorySchema = new Schema<SubCategoryDocument>({
   ],
 });
 
-const SubCategory = model<SubCategoryDocument>(
+const SubCategory = model<SubCategorySchema>(
   "SubCategory",
   subCategorySchema
 );

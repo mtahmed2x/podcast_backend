@@ -1,15 +1,7 @@
-import { Document, Schema, model } from "mongoose";
+import { Schema, model } from "mongoose";
+import {PlanSchema} from "@schemas/plan";
 
-export type PlanDocument = Document & {
-  name: string;
-  description: string;
-  unitAmount: number;
-  interval: "day" | "week" | "month" | "year";
-  productId: string;
-  priceId: string;
-};
-
-const planSchema = new Schema<PlanDocument>({
+const planSchema = new Schema<PlanSchema>({
   name: {
     type: String,
     required: true,
@@ -26,20 +18,17 @@ const planSchema = new Schema<PlanDocument>({
   },
   interval: {
     type: String,
-    required: true,
     enum: ["day", "week", "month", "year"],
   },
   productId: {
     type: String,
-    required: true,
     default: "",
   },
   priceId: {
     type: String,
-    required: true,
     default: "",
   },
 });
 
-const Plan = model<PlanDocument>("Plan", planSchema);
+const Plan = model<PlanSchema>("Plan", planSchema);
 export default Plan;

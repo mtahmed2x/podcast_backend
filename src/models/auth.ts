@@ -1,8 +1,8 @@
 import { Schema, model } from "mongoose";
+import { Role } from "@shared/enums";
+import {AuthSchema} from "@schemas/auth";
 import Creator from "@models/creator";
 import User from "@models/user";
-import { Role } from "@shared/enums";
-import { AuthSchema } from "@type/schema";
 
 const authSchema = new Schema<AuthSchema>(
   {

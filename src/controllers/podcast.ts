@@ -4,7 +4,7 @@ import { getAudioMetadata, getImageMetadata } from "@utils/extractMetadata";
 import path from "path";
 import fs from "fs";
 
-import Podcast, { PodcastDocument } from "@models/podcast";
+import Podcast from "@models/podcast";
 import Category from "@models/category";
 import SubCategory from "@models/subCategory";
 import Creator from "@models/creator";

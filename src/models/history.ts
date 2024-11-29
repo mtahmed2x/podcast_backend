@@ -1,11 +1,7 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
+import {HistorySchema} from "@schemas/history";
 
-export type HistoryDocument = Document & {
-  user: Types.ObjectId;
-  podcasts: Types.ObjectId[];
-};
-
-const historySchema = new Schema<HistoryDocument>({
+const historySchema = new Schema<HistorySchema>({
   user: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -19,5 +15,5 @@ const historySchema = new Schema<HistoryDocument>({
   ],
 });
 
-const History = model<HistoryDocument>("History", historySchema);
+const History = model<HistorySchema>("History", historySchema);
 export default History;

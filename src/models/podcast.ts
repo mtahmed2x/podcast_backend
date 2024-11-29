@@ -1,28 +1,8 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
+import {PodcastSchema} from "@schemas/podcast";
 
-export type PodcastDocument = Document & {
-  creator: Types.ObjectId;
-  category: Types.ObjectId;
-  subCategory: Types.ObjectId;
-  title: string;
-  description?: string;
-  location: string;
-  cover?: string;
-  coverFormat?: string;
-  coverSize?: number;
-  audio: string;
-  audioFormat: string;
-  audioDuration: number;
-  audioSize: number;
-  totalLikes: number;
-  totalViews: number;
-  totalComments: number;
-  totalFavorites: number;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
 
-const podcastSchema = new Schema<PodcastDocument>(
+const podcastSchema = new Schema<PodcastSchema>(
   {
     creator: {
       type: Schema.Types.ObjectId,
@@ -103,5 +83,5 @@ const podcastSchema = new Schema<PodcastDocument>(
   }
 );
 
-const Podcast = model<PodcastDocument>("Podcast", podcastSchema);
+const Podcast = model<PodcastSchema>("Podcast", podcastSchema);
 export default Podcast;

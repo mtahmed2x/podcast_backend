@@ -1,14 +1,7 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
+import {SubscriptionSchema} from "@schemas/subscription";
 
-export type SubscriptionDocument = Document & {
-  plan: Types.ObjectId;
-  user: Types.ObjectId;
-  stripeSubscriptionId: string;
-  stripeCustomerId: string;
-  status: "active" | "inactive" | "pending";
-};
-
-const subscriptionSchema = new Schema<SubscriptionDocument>({
+const subscriptionSchema = new Schema<SubscriptionSchema>({
   plan: {
     type: Schema.Types.ObjectId,
     ref: "Plan",
@@ -16,7 +9,7 @@ const subscriptionSchema = new Schema<SubscriptionDocument>({
   },
   user: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Auth",
     required: true,
   },
   stripeSubscriptionId: {
@@ -29,10 +22,13 @@ const subscriptionSchema = new Schema<SubscriptionDocument>({
     type: String,
     enum: ["active", "inactive", "pending"],
   },
-});
+  startDate: {
+    type: Date,
+  },
+  endDate: {
+    type: Date,
+  }
+}, {timestamps: true});
 
-const Subscription = model<SubscriptionDocument>(
-  "Subscription",
-  subscriptionSchema
-);
+const Subscription = model<SubscriptionSchema>("Subscription", subscriptionSchema );
 export default Subscription;

@@ -1,12 +1,7 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
+import {CommentSchema} from "@schemas/comment";
 
-export type CommentDocument = Document & {
-  user: Types.ObjectId;
-  podcast: Types.ObjectId;
-  text: string;
-};
-
-const commentSchema = new Schema<CommentDocument>({
+const commentSchema = new Schema<CommentSchema>({
   user: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -23,5 +18,5 @@ const commentSchema = new Schema<CommentDocument>({
   },
 });
 
-const Comment = model<CommentDocument>("Comment", commentSchema);
+const Comment = model<CommentSchema>("Comment", commentSchema);
 export default Comment;

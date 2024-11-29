@@ -1,12 +1,7 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
+import {PlaylistSchema} from "@schemas/playlist";
 
-export type PlaylistDocument = Document & {
-  user: Types.ObjectId;
-  podcasts: Types.ObjectId[];
-  title: string;
-};
-
-const playlistSchema = new Schema<PlaylistDocument>(
+const playlistSchema = new Schema<PlaylistSchema>(
   {
     user: {
       type: Schema.Types.ObjectId,
@@ -29,5 +24,5 @@ const playlistSchema = new Schema<PlaylistDocument>(
   { timestamps: true }
 );
 
-const Playlist = model<PlaylistDocument>("Playlist", playlistSchema);
+const Playlist = model<PlaylistSchema>("Playlist", playlistSchema);
 export default Playlist;

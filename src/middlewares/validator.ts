@@ -15,16 +15,3 @@ export const validateRegisterInput = async (
   next();
 };
 
-// export const validateFaqInput = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<any> => {
-//   console.log(req.body);
-
-//   const result = FaqValidatorSchema.safeParse(req.body);
-//   if (!result.success) {
-//     return next(createError(400, fromZodError(result.error)));
-//   }
-//   next();
-// };

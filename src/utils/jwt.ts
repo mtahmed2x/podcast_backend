@@ -6,11 +6,11 @@ export type Decoded = {
 };
 
 export const generateToken = (
-  authId: string,
+  id: string,
   secret: string,
   duration: string
 ): string => {
-  const token = jwt.sign({ authId }, secret, { expiresIn: duration });
+  const token = jwt.sign({ id }, secret, { expiresIn: duration });
   return token;
 };
 

@@ -15,10 +15,12 @@ import DashboardRouter from "@routers/dashboard";
 import FaqRouter from "@routers/faq";
 import TaCRouter from "@routers/tac";
 import AboutRouter from "@routers/about";
+import WebHookRouter from "@routers/stripe-webhook";
 import notFound from "@middlewares/notfound";
 
 const app = express();
 
+app.use("/", WebHookRouter);
 app.use(express.json());
 app.use(
   cors({
@@ -32,7 +34,7 @@ app.use("/category", CategoryRouter);
 app.use("/sub-category", SubCategoryRouter);
 app.use("/podcast", PodcastRouter);
 app.use("/plan", PlanRouter);
-app.use("subscription", SubScriptionRouter);
+app.use("/subscription", SubScriptionRouter);
 app.use("/user", UserRouter);
 app.use("/creator", CreatorRouter);
 app.use("/dashboard", DashboardRouter);
