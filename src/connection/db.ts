@@ -8,7 +8,6 @@ const connectDB = async (uri: string) => {
     console.error(error);
     return;
   }
-  logger.info(`DB Connected Successfully on mongodb://127.0.0.1:27017`);
 };
 
 export default connectDB;
