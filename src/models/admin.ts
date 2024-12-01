@@ -1,4 +1,4 @@
-import {AdminSchema} from "@schemas/admin";
+import { AdminSchema } from "@schemas/admin";
 import { Schema, model } from "mongoose";
 
 const adminSchema = new Schema<AdminSchema>({

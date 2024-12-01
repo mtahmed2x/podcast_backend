@@ -1,7 +1,7 @@
-import {Document, Types} from "mongoose";
+import { Document, Types } from "mongoose";
 
 export type CreatorSchema = Document & {
-    auth: Types.ObjectId;
-    user: Types.ObjectId;
-    podcasts: Types.ObjectId[];
+  auth: Types.ObjectId;
+  user: Types.ObjectId;
+  podcasts: Types.ObjectId[];
 };

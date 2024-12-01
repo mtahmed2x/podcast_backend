@@ -1,6 +1,6 @@
-import {Document, Types} from "mongoose";
+import { Document, Types } from "mongoose";
 
 export type SubCategorySchema = Document & {
-    title: string;
-    podcasts: Types.ObjectId[];
+  title: string;
+  podcasts: Types.ObjectId[];
 };

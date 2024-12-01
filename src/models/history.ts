@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import {HistorySchema} from "@schemas/history";
+import { HistorySchema } from "@schemas/history";
 
 const historySchema = new Schema<HistorySchema>({
   user: {

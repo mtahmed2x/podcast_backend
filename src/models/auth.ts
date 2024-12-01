@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 import { Role } from "@shared/enums";
-import {AuthSchema} from "@schemas/auth";
+import { AuthSchema } from "@schemas/auth";
 import Creator from "@models/creator";
 import User from "@models/user";
 
@@ -42,7 +42,7 @@ const authSchema = new Schema<AuthSchema>(
       default: "free",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 authSchema.pre("findOneAndDelete", async function (next) {

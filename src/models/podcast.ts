@@ -1,6 +1,5 @@
 import { Schema, model } from "mongoose";
-import {PodcastSchema} from "@schemas/podcast";
-
+import { PodcastSchema } from "@schemas/podcast";
 
 const podcastSchema = new Schema<PodcastSchema>(
   {
@@ -80,7 +79,7 @@ const podcastSchema = new Schema<PodcastSchema>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Podcast = model<PodcastSchema>("Podcast", podcastSchema);

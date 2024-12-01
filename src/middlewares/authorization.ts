@@ -10,19 +10,13 @@ import Admin from "@models/admin";
 
 import { Role } from "@shared/enums";
 import { decodeToken } from "@utils/jwt";
-import {DecodedUser} from "@schemas/decodedUser";
+import { DecodedUser } from "@schemas/decodedUser";
 
-export const getUserInfo = async (
-  authId: string
-): Promise<DecodedUser | null> => {
+export const getUserInfo = async (authId: string): Promise<DecodedUser | null> => {
   let error, auth, user, creator, admin;
-  [error, auth] = await to(
-    Auth.findById(authId).select("email role isVerified isBlocked")
-  );
+  [error, auth] = await to(Auth.findById(authId).select("email role isVerified isBlocked"));
   if (error || !auth) return null;
-  console.log(auth);
   [error, user] = await to(User.findOne({ auth: authId }));
-  console.log(user);
   if (error || !user) return null;
 
   const data: DecodedUser = {
@@ -56,13 +50,8 @@ const hasAccess = (roles: Role[]) => {
 };
 
 const authorizeToken = (secret: string, errorMessage: string) => {
-  return async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<any> => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const authHeader = req.headers.authorization;
-    console.log(authHeader);
     if (!authHeader || !authHeader.startsWith("Bearer")) {
       return next(createError(401, "Not Authorized"));
     }
@@ -85,18 +74,9 @@ const authorizeToken = (secret: string, errorMessage: string) => {
   };
 };
 
-export const authorize = authorizeToken(
-  process.env.JWT_ACCESS_SECRET!,
-  "Invalid Token"
-);
-export const refreshAuthorize = authorizeToken(
-  process.env.JWT_REFRESH_SECRET!,
-  "Invalid Refresh Token"
-);
-export const recoveryAuthorize = authorizeToken(
-  process.env.JWT_RECOVERY_SECRET!,
-  "Invalid Recovery Token"
-);
+export const authorize = authorizeToken(process.env.JWT_ACCESS_SECRET!, "Invalid Token");
+export const refreshAuthorize = authorizeToken(process.env.JWT_REFRESH_SECRET!, "Invalid Refresh Token");
+export const recoveryAuthorize = authorizeToken(process.env.JWT_RECOVERY_SECRET!, "Invalid Recovery Token");
 
 export const isAdmin = hasAccess([Role.ADMIN]);
 export const isCreator = hasAccess([Role.CREATOR]);

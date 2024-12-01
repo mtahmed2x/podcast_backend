@@ -14,10 +14,7 @@ type Params = {
   id: string;
 };
 
-const create = async (
-  req: Request<{}, {}, SubCategoryPayload>,
-  res: Response
-): Promise<any> => {
+const create = async (req: Request<{}, {}, SubCategoryPayload>, res: Response): Promise<any> => {
   let error, category, subCategory;
   const { categoryId, title } = req.body;
 
@@ -32,46 +29,31 @@ const create = async (
   [error] = await to(category.save());
   if (error) return handleError(error, res);
 
-  return res
-    .status(201)
-    .json({ message: "SubCategory created successfully", data: subCategory });
+  return res.status(201).json({ message: "SubCategory created successfully", data: subCategory });
 };
 
 const getAll = async (req: Request, res: Response): Promise<any> => {
-  const [error, subCategories] = await to(
-    SubCategory.find().select("title").lean()
-  );
+  const [error, subCategories] = await to(SubCategory.find().select("title").lean());
   if (error) return handleError(error, res);
   return res.status(200).json({ SubCategories: subCategories });
 };
 
 const getById = async (req: Request<Params>, res: Response): Promise<any> => {
   const id = req.params.id;
-  const [error, subCategory] = await to(
-    SubCategory.findById(id).select("title").lean()
-  );
+  const [error, subCategory] = await to(SubCategory.findById(id).select("title").lean());
   if (error) return handleError(error, res);
-  if (!subCategory)
-    return res.status(404).json({ error: "SubCategory not found!" });
+  if (!subCategory) return res.status(404).json({ error: "SubCategory not found!" });
   return res.status(200).json({ SubCategory: subCategory });
 };
 
-const update = async (
-  req: Request<Params, {}, SubCategoryPayload>,
-  res: Response
-): Promise<any> => {
+const update = async (req: Request<Params, {}, SubCategoryPayload>, res: Response): Promise<any> => {
   const id = req.params.id;
   const title = req.body.title;
   const [error, subCategory] = await to(
-    SubCategory.findOneAndUpdate(
-      { _id: id },
-      { $set: { title: title } },
-      { new: true }
-    )
+    SubCategory.findOneAndUpdate({ _id: id }, { $set: { title: title } }, { new: true }),
   );
   if (error) return handleError(error, res);
-  if (!subCategory)
-    return res.status(404).json({ error: "SubCategory not found!" });
+  if (!subCategory) return res.status(404).json({ error: "SubCategory not found!" });
   return res.status(200).json({
     SubCategory: subCategory,
   });
@@ -81,12 +63,11 @@ const remove = async (req: Request<Params>, res: Response): Promise<any> => {
   const id = req.params.id;
   const [error, subCategory] = await to(SubCategory.findByIdAndDelete(id));
   if (error) return handleError(error, res);
-  if (!subCategory)
-    return res.status(404).json({ error: "SubCategory not found!" });
+  if (!subCategory) return res.status(404).json({ error: "SubCategory not found!" });
   const category = await Category.findOneAndUpdate(
     { subCategories: id },
     { $pull: { subCategories: id } },
-    { new: true }
+    { new: true },
   );
   if (!category) return res.status(404).json({ error: "Category not found!" });
   return res.status(200).json({
@@ -94,17 +75,11 @@ const remove = async (req: Request<Params>, res: Response): Promise<any> => {
   });
 };
 
-const getAllPodcasts = async (
-  req: Request<Params>,
-  res: Response
-): Promise<any> => {
+const getAllPodcasts = async (req: Request<Params>, res: Response): Promise<any> => {
   const id = req.params.id;
-  const [error, podcasts] = await to(
-    SubCategory.findById(id).populate("podcasts")
-  );
+  const [error, podcasts] = await to(SubCategory.findById(id).populate("podcasts"));
   if (error) return handleError(error, res);
-  if (!podcasts)
-    return res.status(404).json({ error: "SubCategory not found!" });
+  if (!podcasts) return res.status(404).json({ error: "SubCategory not found!" });
   return res.status(200).json({
     message: "Successfully fetched all podcasts of the SubCategory",
     data: podcasts,

@@ -17,10 +17,7 @@ type Param = {
   id: string;
 };
 
-const update = async (
-  req: Request<{}, {}, UserSchema>,
-  res: Response
-): Promise<any> => {
+const update = async (req: Request<{}, {}, UserSchema>, res: Response): Promise<any> => {
   const userId = req.user.userId;
   const { name, dateOfBirth, gender, contact, address } = req.body;
   const [error, user] = await to(User.findOne({ _id: userId }));
@@ -34,12 +31,9 @@ const update = async (
   if (contact) updateFields.contact = contact;
   if (address) updateFields.address = address;
 
-  if (Object.keys(updateFields).length === 0)
-    return res.status(400).json({ error: "Nothing to update" });
+  if (Object.keys(updateFields).length === 0) return res.status(400).json({ error: "Nothing to update" });
 
-  const [updateError, updatedUser] = await to(
-    User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true })
-  );
+  const [updateError, updatedUser] = await to(User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true }));
   if (updateError) return handleError(updateError, res);
   return res.status(200).json({ message: "Update successful", updatedUser });
 };

@@ -1,6 +1,6 @@
-import {Document, Types} from "mongoose";
+import { Document, Types } from "mongoose";
 
 export type HistorySchema = Document & {
-    user: Types.ObjectId;
-    podcasts: Types.ObjectId[];
+  user: Types.ObjectId;
+  podcasts: Types.ObjectId[];
 };

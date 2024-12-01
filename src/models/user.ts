@@ -1,4 +1,4 @@
-import {UserSchema} from "@schemas/user";
+import { UserSchema } from "@schemas/user";
 import { Schema, model } from "mongoose";
 
 const userSchema = new Schema<UserSchema>(
@@ -27,7 +27,7 @@ const userSchema = new Schema<UserSchema>(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const User = model<UserSchema>("User", userSchema);

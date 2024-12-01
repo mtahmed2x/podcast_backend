@@ -5,19 +5,10 @@ export type Decoded = {
   id: string;
 };
 
-export const generateToken = (
-  id: string,
-  secret: string,
-  duration: string
-): string => {
-  const token = jwt.sign({ id }, secret, { expiresIn: duration });
-  return token;
-};
+export const generateToken = (id: string, secret: string, duration: string): string =>
+  jwt.sign({ id }, secret, { expiresIn: duration });
 
-export const decodeToken = (
-  token: string,
-  secret: string
-): [Error | null, Decoded | null] => {
+export const decodeToken = (token: string, secret: string): [Error | null, Decoded | null] => {
   let decoded: Decoded | null = null;
   try {
     decoded = jwt.verify(token, secret) as jwt.JwtPayload & Decoded;

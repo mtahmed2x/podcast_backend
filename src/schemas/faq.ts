@@ -1,6 +1,6 @@
-import {Document} from "mongoose";
+import { Document } from "mongoose";
 
 export type FaqSchema = Document & {
-    question: string;
-    answer: string;
+  question: string;
+  answer: string;
 };

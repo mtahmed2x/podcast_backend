@@ -24,14 +24,14 @@ export const logger = createLogger({
     label({ label: "PodCast" }),
     timestamp(),
     colorize(), // Apply colorization to the entire log
-    myFormat
+    myFormat,
   ),
   transports: [
     // Console transport (colored logs for all sections)
     new transports.Console({
       format: combine(
         colorize(), // Apply colorization to all log sections in console
-        myFormat // Use custom format for the console
+        myFormat, // Use custom format for the console
       ),
     }),
 
@@ -60,14 +60,14 @@ export const errorLogger = createLogger({
     label({ label: "PodCast" }),
     timestamp(),
     colorize(), // Apply colorization to the entire log
-    myFormat
+    myFormat,
   ),
   transports: [
     // Console transport (colored logs for all sections)
     new transports.Console({
       format: combine(
         colorize(), // Apply colorization to all log sections in console
-        myFormat // Use custom format for the console
+        myFormat, // Use custom format for the console
       ),
     }),
 

@@ -5,7 +5,7 @@ import { logger } from "@shared/logger";
 const connectDB = async (uri: string) => {
   const [error] = await to(mongoose.connect(uri));
   if (error) {
-    logger.error(error)
+    logger.error(error);
     return;
   }
 };

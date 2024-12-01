@@ -2,9 +2,9 @@ import Stripe from "stripe";
 import "dotenv/config";
 import to from "await-to-ts";
 import createError from "http-errors";
-import {NextFunction, Request, Response} from "express";
+import { NextFunction, Request, Response } from "express";
 import Plan from "@models/plan";
-import {PlanSchema} from "../schemas/plan";
+import { PlanSchema } from "../schemas/plan";
 import httpStatus from "http-status";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -13,21 +13,17 @@ type Param = {
   id: string;
 };
 
-const create = async (
-  req: Request<{}, {}, Partial<PlanSchema>>,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
+const create = async (req: Request<{}, {}, Partial<PlanSchema>>, res: Response, next: NextFunction): Promise<any> => {
   const { name, description, unitAmount, interval } = req.body;
 
   let error, product, price, plan;
 
-  if(unitAmount || interval) {
+  if (unitAmount || interval) {
     [error, product] = await to(
       stripe.products.create({
         name: name!,
         description: description,
-      })
+      }),
     );
     if (error) return next(error);
 
@@ -39,7 +35,7 @@ const create = async (
         recurring: {
           interval: interval!,
         },
-      })
+      }),
     );
     if (error) return next(error);
 
@@ -51,15 +47,13 @@ const create = async (
         interval: interval,
         productId: product.id,
         priceId: price.id,
-      })
+      }),
     );
     if (error) return next(error);
-  }
-  else {
-    [error, plan] = await to(Plan.create({name: name, description: description}));
+  } else {
+    [error, plan] = await to(Plan.create({ name: name, description: description }));
     if (error) return next(error);
   }
-
 
   res.status(httpStatus.CREATED).json({
     message: "Success",
@@ -67,18 +61,13 @@ const create = async (
   });
 };
 
-const get = async (
-    req: Request<Param>,
-    res: Response,
-    next: NextFunction
-): Promise<any> => {
+const get = async (req: Request<Param>, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   const [error, plan] = await to(Plan.findById(id).lean());
   if (error) return next(error);
   if (!plan) return next(createError(404, "Plan not found"));
-  return res.status(200).json({ message: "Success", data : plan });
+  return res.status(200).json({ message: "Success", data: plan });
 };
-
 
 const getAll = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const [error, plans] = await to(Plan.find().lean());
@@ -89,7 +78,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
 const update = async (
   req: Request<Param, {}, Partial<PlanSchema>>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<any> => {
   const id = req.params.id;
   let { name, description, unitAmount, interval } = req.body;
@@ -105,9 +94,7 @@ const update = async (
     if (name) updatedProductFields.name = name;
     if (description) updatedProductFields.description = description;
 
-    const [error] = await to(
-      stripe.products.update(plan.productId, updatedProductFields)
-    );
+    const [error] = await to(stripe.products.update(plan.productId, updatedProductFields));
     if (error) return next(error);
   }
 
@@ -117,7 +104,7 @@ const update = async (
     let [error] = await to(
       stripe.prices.update(plan.priceId, {
         active: false,
-      })
+      }),
     );
     if (error) return next(error);
     if (!unitAmount) {
@@ -134,7 +121,7 @@ const update = async (
         recurring: {
           interval: interval!,
         },
-      })
+      }),
     );
     if (error) return next(error);
     if (price) updatedPlanData.priceId = price.id;
@@ -145,9 +132,7 @@ const update = async (
   if (unitAmount) updatedPlanData.unitAmount = unitAmount;
   if (interval) updatedPlanData.interval = interval;
 
-  [error, plan] = await to(
-    Plan.findByIdAndUpdate(id, { $set: updatedPlanData }, { new: true })
-  );
+  [error, plan] = await to(Plan.findByIdAndUpdate(id, { $set: updatedPlanData }, { new: true }));
   if (error) return next(error);
 
   res.status(200).json({

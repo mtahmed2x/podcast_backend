@@ -11,10 +11,7 @@ type Params = {
   id: string;
 };
 
-const create = async (
-  req: Request<{}, {}, CategoryPayload>,
-  res: Response
-): Promise<any> => {
+const create = async (req: Request<{}, {}, CategoryPayload>, res: Response): Promise<any> => {
   const title = req.body.title;
   const [error, category] = await to(Category.create({ title }));
   if (error) return handleError(error, res);
@@ -26,9 +23,7 @@ const create = async (
 
 const getAll = async (req: Request, res: Response): Promise<any> => {
   const [error, categories] = await to(
-    Category.find()
-      .populate({ path: "subCategories", select: "title" })
-      .select("title subCategories")
+    Category.find().populate({ path: "subCategories", select: "title" }).select("title subCategories"),
   );
   if (error) return handleError(error, res);
   return res.status(200).json({
@@ -39,9 +34,7 @@ const getAll = async (req: Request, res: Response): Promise<any> => {
 
 const getById = async (req: Request<Params>, res: Response): Promise<any> => {
   const id = req.params.id;
-  const [error, category] = await to(
-    Category.findById(id).select("title subCategories").lean()
-  );
+  const [error, category] = await to(Category.findById(id).select("title subCategories").lean());
   if (error) return handleError(error, res);
   return res.status(200).json({
     message: "Successfully fetched the category",
@@ -49,19 +42,10 @@ const getById = async (req: Request<Params>, res: Response): Promise<any> => {
   });
 };
 
-const update = async (
-  req: Request<Params, {}, CategoryPayload>,
-  res: Response
-): Promise<any> => {
+const update = async (req: Request<Params, {}, CategoryPayload>, res: Response): Promise<any> => {
   const id = req.params.id;
   const title = req.body.title;
-  const [error, category] = await to(
-    Category.findOneAndUpdate(
-      { _id: id },
-      { $set: { title: title } },
-      { new: true }
-    )
-  );
+  const [error, category] = await to(Category.findOneAndUpdate({ _id: id }, { $set: { title: title } }, { new: true }));
   if (error) return handleError(error, res);
   if (!category) return res.status(404).json({ error: "Category not found!" });
   return res.status(200).json({
@@ -80,16 +64,10 @@ const remove = async (req: Request<Params>, res: Response): Promise<any> => {
   });
 };
 
-const getAllSubCategories = async (
-  req: Request<Params>,
-  res: Response
-): Promise<any> => {
+const getAllSubCategories = async (req: Request<Params>, res: Response): Promise<any> => {
   const id = req.params.id;
   const [error, subCategories] = await to(
-    Category.findById(id)
-      .populate({ path: "subCategories", select: "title" })
-      .select("subCategories")
-      .lean()
+    Category.findById(id).populate({ path: "subCategories", select: "title" }).select("subCategories").lean(),
   );
   if (error) return handleError(error, res);
   return res.status(200).json({

@@ -10,10 +10,6 @@ authRouter.post("/activate", AuthController.activate);
 authRouter.post("/login", AuthController.login);
 authRouter.post("/forgot-password", AuthController.forgotPassword);
 authRouter.post("/verify-otp", AuthController.verifyOTP);
-authRouter.post(
-  "/change-password",
-  recoveryAuthorize,
-  AuthController.changePassword
-);
+authRouter.post("/change-password", recoveryAuthorize, AuthController.changePassword);
 
 export default authRouter;

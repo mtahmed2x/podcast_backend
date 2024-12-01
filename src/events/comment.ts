@@ -1,11 +1,7 @@
 import Comment from "@models/comment";
-import {CommentSchema} from "@schemas/comment";
+import { CommentSchema } from "@schemas/comment";
 
-export const addNewComment = async (
-  id: string,
-  text: string,
-  userId: string
-): Promise<CommentSchema> => {
+export const addNewComment = async (id: string, text: string, userId: string): Promise<CommentSchema> => {
   const comment = await Comment.create({
     user: userId,
     podcast: id,

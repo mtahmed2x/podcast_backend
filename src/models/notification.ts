@@ -1,15 +1,8 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
+import { NotificationSchema } from "@schemas/notification";
+import { Subject } from "@shared/enums";
 
-export type NotificationDocument = Document & {
-  creator: Types.ObjectId;
-  podcast: Types.ObjectId;
-  users: Types.ObjectId[];
-  subject: "like" | "comment" | "favorite" | "donation";
-  message: string;
-  isRead: boolean;
-};
-
-const notificationSchema = new Schema<NotificationDocument>(
+const notificationSchema = new Schema<NotificationSchema>(
   {
     creator: {
       type: Schema.Types.ObjectId,
@@ -29,7 +22,7 @@ const notificationSchema = new Schema<NotificationDocument>(
     ],
     subject: {
       type: String,
-      enum: ["like", "comment", "favorite", "donation"],
+      enum: Subject,
     },
     message: {
       type: String,
@@ -40,12 +33,9 @@ const notificationSchema = new Schema<NotificationDocument>(
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const Notification = model<NotificationDocument>(
-  "Notification",
-  notificationSchema
-);
+const Notification = model<NotificationSchema>("Notification", notificationSchema);
 
 export default Notification;

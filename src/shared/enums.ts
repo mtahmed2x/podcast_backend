@@ -3,3 +3,9 @@ export enum Role {
   CREATOR = "CREATOR",
   ADMIN = "ADMIN",
 }
+
+export enum Subject {
+  LIKE = "like",
+  COMMENT = "comment",
+  PLAYLIST = "playlist",
+}

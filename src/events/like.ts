@@ -1,9 +1,6 @@
 import Like from "@models/like";
 
-export const addOrRemoveLike = async (
-  id: string,
-  userId: string
-): Promise<number> => {
+export const addOrRemoveLike = async (id: string, userId: string): Promise<number> => {
   let like = await Like.findOne({ podcast: id, user: userId });
   if (like) {
     await Like.deleteOne({ podcast: id, user: userId });

@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import {PlanSchema} from "@schemas/plan";
+import { PlanSchema } from "@schemas/plan";
 
 const planSchema = new Schema<PlanSchema>({
   name: {

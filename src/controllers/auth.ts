@@ -4,10 +4,10 @@ import mongoose from "mongoose";
 import createError from "http-errors";
 import bcrypt from "bcrypt";
 import "dotenv/config";
-import {AuthSchema} from "../schemas/auth";
-import {UserSchema} from "../schemas/user";
-import {AdminSchema} from "../schemas/admin";
-import {CreatorSchema} from "../schemas/creator";
+import { AuthSchema } from "@schemas/auth";
+import { UserSchema } from "@schemas/user";
+import { AdminSchema } from "@schemas/admin";
+import { CreatorSchema } from "@schemas/creator";
 import Auth from "@models/auth";
 import User from "@models/user";
 import Creator from "@models/creator";
@@ -16,26 +16,14 @@ import sendEmail from "@utils/sendEmail";
 import generateOTP from "@utils/generateOTP";
 import handleError from "@utils/handleError";
 import { generateToken } from "@utils/jwt";
+import httpStatus from "http-status";
 
 type Register = Pick<
   AuthSchema & UserSchema,
-  | "email"
-  | "password"
-  | "confirmPassword"
-  | "role"
-  | "name"
-  | "address"
-  | "dateOfBirth"
+  "email" | "password" | "confirmPassword" | "role" | "name" | "address" | "dateOfBirth"
 >;
 
 type Login = Pick<AuthSchema, "email" | "password">;
-
-type UserPayload = {
-  name: string;
-  role: "admin" | "user" | "creator";
-  dateOfBirth: string;
-  address: string;
-};
 
 type VerifyEmailPayload = {
   email: string;
@@ -51,13 +39,8 @@ type ChangePasswordPayload = {
   confirmPassword?: string;
 };
 
-const register = async (
-  req: Request<{}, {}, Register>,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  const { name, email, role, dateOfBirth, address, password, confirmPassword } =
-    req.body;
+const register = async (req: Request<{}, {}, Register>, res: Response, next: NextFunction): Promise<any> => {
+  const { name, email, role, dateOfBirth, address, password, confirmPassword } = req.body;
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -81,7 +64,7 @@ const register = async (
       role,
       verificationOTP: verificationOTP,
       verificationOTPExpire,
-    })
+    }),
   );
   if (error) {
     await session.abortTransaction();
@@ -96,7 +79,7 @@ const register = async (
       name: name,
       dateOfBirth: dateOfBirth,
       address: address,
-    })
+    }),
   );
   if (error) {
     await session.abortTransaction();
@@ -113,7 +96,7 @@ const register = async (
       Creator.create({
         auth: auth._id,
         user: user._id,
-      })
+      }),
     );
     if (error) {
       await session.abortTransaction();
@@ -130,7 +113,7 @@ const register = async (
       Admin.create({
         auth: auth._id,
         user: user._id,
-      })
+      }),
     );
     if (error) {
       await session.abortTransaction();
@@ -151,9 +134,7 @@ const register = async (
   });
 };
 
-const verifyEmail = async (
-  payload: VerifyEmailPayload
-): Promise<[Error | null, AuthSchema | null]> => {
+const verifyEmail = async (payload: VerifyEmailPayload): Promise<[Error | null, AuthSchema | null]> => {
   const { email, verificationOTP } = payload;
   let [error, auth] = await to(Auth.findOne({ email }));
   if (error) return [error, null];
@@ -168,10 +149,7 @@ const verifyEmail = async (
   return [error, null];
 };
 
-const activate = async (
-  req: Request<{}, {}, VerifyEmailPayload>,
-  res: Response
-): Promise<any> => {
+const activate = async (req: Request<{}, {}, VerifyEmailPayload>, res: Response): Promise<any> => {
   let [error, auth] = await verifyEmail(req.body);
   if (error) return handleError(error, res);
 
@@ -184,11 +162,7 @@ const activate = async (
   }
 };
 
-const login = async (
-  req: Request<{}, {}, Login>,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
+const login = async (req: Request<{}, {}, Login>, res: Response, next: NextFunction): Promise<any> => {
   const { email, password } = req.body;
   const [error, auth] = await to(Auth.findOne({ email }));
   if (error) return next(error);
@@ -196,10 +170,9 @@ const login = async (
 
   const isPasswordValid = await bcrypt.compare(password, auth.password);
   if (!isPasswordValid) return next(createError(401, "Wrong password"));
-  if (!auth.isVerified)
-    return next(createError(401, "Verify your email first"));
+  if (!auth.isVerified) return next(createError(401, "Verify your email first"));
 
-  if (auth.isBlocked) return next(createError(403, "You are blocked"));
+  if (auth.isBlocked) return next(createError(httpStatus.FORBIDDEN, "You are blocked"));
 
   const accessSecret = process.env.JWT_ACCESS_SECRET;
   const refreshSecret = process.env.JWT_REFRESH_SECRET;
@@ -208,26 +181,20 @@ const login = async (
   }
 
   const accessToken = generateToken(auth._id!.toString(), accessSecret, "10m");
-  const refreshToken = generateToken(
-    auth._id!.toString(),
-    refreshSecret,
-    "96h"
-  );
+  const refreshToken = generateToken(auth._id!.toString(), refreshSecret, "96h");
 
-  return res
-    .status(200)
-    .json({ message: "Success", data: [accessToken, refreshToken] });
+  return res.status(httpStatus.OK).json({ message: "Success", data: [accessToken, refreshToken] });
 };
 
 const forgotPassword = async (
   req: Request<{}, {}, ForgotPasswordPayload>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<any> => {
   const { email } = req.body;
   const [error, auth] = await to(Auth.findOne({ email }));
   if (error) return next(error);
-  if (!auth) return next(createError(404, "User Not Found"));
+  if (!auth) return next(createError(httpStatus.NOT_FOUND, "User Not Found"));
   const verificationOTP = generateOTP();
   auth.verificationOTP = verificationOTP;
   auth.verificationOTPExpire = new Date(Date.now() + 1 * 60 * 1000);
@@ -236,11 +203,7 @@ const forgotPassword = async (
   return res.status(200).json({ message: "Success. Verification mail sent." });
 };
 
-const verifyOTP = async (
-  req: Request<{}, {}, VerifyEmailPayload>,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
+const verifyOTP = async (req: Request<{}, {}, VerifyEmailPayload>, res: Response, next: NextFunction): Promise<any> => {
   const [error, auth] = await verifyEmail(req.body);
   if (error) return handleError(error, res);
   if (auth) {
@@ -249,6 +212,7 @@ const verifyOTP = async (
       return next(createError(500, "JWT secret is not defined."));
     }
     const recoveryToken = generateToken(auth._id!.toString(), secret, "20m");
+    if (!recoveryToken) return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "Failed"));
     res.status(200).json({ message: "Success", data: recoveryToken });
   }
 };
@@ -256,25 +220,29 @@ const verifyOTP = async (
 const changePassword = async (
   req: Request<{}, {}, ChangePasswordPayload>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<any> => {
   const { password, confirmPassword } = req.body;
-  if (password !== confirmPassword)
-    return next(createError(401, "Passwords don't match"));
+  if (password !== confirmPassword) return next(createError(httpStatus.BAD_REQUEST, "Passwords don't match"));
   const user = req.user;
   const auth = await Auth.findById(user.authId!);
   if (auth) {
     auth!.password = await bcrypt.hash(password, 10);
     await auth.save();
   }
-  return res.status(200).json({ message: "Success. Password changed" });
+  return res.status(httpStatus.OK).json({ message: "Success. Password changed" });
 };
 
-const getAccessToken = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {};
+const getAccessToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const user = req.user;
+  const secret = process.env.JWT_ACCESS_SECRET;
+  if (!secret) {
+    return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "JWT secret is not defined."));
+  }
+  const accessToken = generateToken(user.authId, secret, "20m");
+  if (!accessToken) return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "Failed"));
+  res.status(httpStatus.OK).json({ message: "Success", data: accessToken });
+};
 
 const AuthController = {
   register,
@@ -283,6 +251,7 @@ const AuthController = {
   forgotPassword,
   verifyOTP,
   changePassword,
+  getAccessToken,
 };
 
 export default AuthController;

@@ -1,5 +1,5 @@
-import {Document} from "mongoose";
+import { Document } from "mongoose";
 
 export type TaCSchema = Document & {
-  text: string,
-}
+  text: string;
+};

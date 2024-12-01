@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import {FaqSchema} from "@schemas/faq";
+import { FaqSchema } from "@schemas/faq";
 
 const faqSchema = new mongoose.Schema<FaqSchema>({
   question: {

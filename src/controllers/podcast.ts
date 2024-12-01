@@ -34,8 +34,7 @@ const create = async (req: Request, res: Response): Promise<any> => {
   const podcastReq = req as PodcastRequest;
   const creatorId = req.user.creatorId;
   const { audio, cover } = podcastReq.files;
-  const { categoryId, subCategoryId, title, description, location } =
-    podcastReq.body;
+  const { categoryId, subCategoryId, title, description, location } = podcastReq.body;
 
   const audio_path = audio[0].path;
   const cover_path = cover[0].path;
@@ -57,20 +56,20 @@ const create = async (req: Request, res: Response): Promise<any> => {
       audioFormat: audioMetadata.format,
       audioSize: audioMetadata.size,
       audioDuration: audioMetadata.duration,
-    })
+    }),
   );
   if (error) return handleError(error, res);
 
   let updateError;
-  [updateError] = await to(
-    Creator.findByIdAndUpdate(creatorId, { $push: { podcasts: podcast._id } })
-  );
+  [updateError] = await to(Creator.findByIdAndUpdate(creatorId, { $push: { podcasts: podcast._id } }));
   if (updateError) {
     await Podcast.findByIdAndDelete(podcast._id);
     return handleError(updateError, res);
   }
   [updateError] = await to(
-    Category.findByIdAndUpdate(categoryId, { $push: { podcasts: podcast._id } })
+    Category.findByIdAndUpdate(categoryId, {
+      $push: { podcasts: podcast._id },
+    }),
   );
   if (updateError) {
     await Podcast.findByIdAndDelete(podcast._id);
@@ -79,7 +78,7 @@ const create = async (req: Request, res: Response): Promise<any> => {
   [updateError] = await to(
     SubCategory.findByIdAndUpdate(subCategoryId, {
       $push: { podcasts: podcast._id },
-    })
+    }),
   );
   if (updateError) {
     await Podcast.findByIdAndDelete(podcast._id);
@@ -116,8 +115,7 @@ const update = async (req: Request, res: Response): Promise<any> => {
   let error;
   const { id } = req.params;
   const { cover } = podcastReq.files;
-  const { categoryId, subCategoryId, title, description, location } =
-    podcastReq.body;
+  const { categoryId, subCategoryId, title, description, location } = podcastReq.body;
 
   const updateFields: {
     category?: string;
@@ -132,8 +130,7 @@ const update = async (req: Request, res: Response): Promise<any> => {
     let category;
     [error, category] = await to(Category.findById(categoryId));
     if (error) handleError(error, res);
-    if (!category)
-      return res.status(404).json({ error: "Category not found!" });
+    if (!category) return res.status(404).json({ error: "Category not found!" });
     updateFields.category = categoryId;
   }
   if (subCategoryId) {
@@ -151,9 +148,7 @@ const update = async (req: Request, res: Response): Promise<any> => {
   if (cover) updateFields.cover = cover[0].path;
 
   let podcast;
-  [error, podcast] = await to(
-    Podcast.findByIdAndUpdate(id, { $set: updateFields }, { new: true })
-  );
+  [error, podcast] = await to(Podcast.findByIdAndUpdate(id, { $set: updateFields }, { new: true }));
   if (error) return res.status(500).json({ error: error.message });
   res.status(200).json({ message: "Podcast updated successfully", podcast });
 };
@@ -170,34 +165,26 @@ const remove = async (req: Request<Params>, res: Response): Promise<any> => {
   fs.unlink(coverPath, (err) => {
     if (err) {
       console.error("Failed to delete file:", err);
-      return res
-        .status(500)
-        .json({ error: "Failed to delete file from storage" });
+      return res.status(500).json({ error: "Failed to delete file from storage" });
     }
   });
   fs.unlink(audioPath, (err) => {
     if (err) {
       console.error("Failed to delete file:", err);
-      return res
-        .status(500)
-        .json({ error: "Failed to delete file from storage" });
+      return res.status(500).json({ error: "Failed to delete file from storage" });
     }
   });
 
-  [error] = await to(
-    Creator.findByIdAndUpdate(podcast.creator, { $pull: { podcasts: id } })
-  );
+  [error] = await to(Creator.findByIdAndUpdate(podcast.creator, { $pull: { podcasts: id } }));
   if (error) return handleError(error, res);
 
-  [error] = await to(
-    Category.findByIdAndUpdate(podcast.category, { $pull: { podcasts: id } })
-  );
+  [error] = await to(Category.findByIdAndUpdate(podcast.category, { $pull: { podcasts: id } }));
   if (error) return handleError(error, res);
 
   [error] = await to(
     SubCategory.findByIdAndUpdate(podcast.subCategory, {
       $pull: { podcasts: id },
-    })
+    }),
   );
   if (error) return handleError(error, res);
 
@@ -207,25 +194,14 @@ const remove = async (req: Request<Params>, res: Response): Promise<any> => {
   res.status(200).json({ message: "Podcast deleted successfully" });
 };
 
-export const updateLikeCount = async (
-  podcastId: string,
-  value: number
-): Promise<number> => {
-  const podcast = await Podcast.findByIdAndUpdate(
-    podcastId,
-    { $inc: { totalLikes: value } },
-    { new: true }
-  );
+export const updateLikeCount = async (podcastId: string, value: number): Promise<number> => {
+  const podcast = await Podcast.findByIdAndUpdate(podcastId, { $inc: { totalLikes: value } }, { new: true });
   return podcast!.totalLikes;
 };
 
 export const updateCommentCount = async (podcastId: string): Promise<void> => {
   const [error, podcast] = await to(
-    Podcast.findByIdAndUpdate(
-      podcastId,
-      { $inc: { totalComments: 1 } },
-      { new: true }
-    )
+    Podcast.findByIdAndUpdate(podcastId, { $inc: { totalComments: 1 } }, { new: true }),
   );
   if (error) console.error(error);
   if (!podcast) console.error("Failed to update podcast comment count");

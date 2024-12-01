@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import {LikeSchema} from "@schemas/like";
+import { LikeSchema } from "@schemas/like";
 
 const likeSchema = new Schema<LikeSchema>(
   {
@@ -14,7 +14,7 @@ const likeSchema = new Schema<LikeSchema>(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Like = model<LikeSchema>("Like", likeSchema);

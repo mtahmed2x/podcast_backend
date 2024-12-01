@@ -1,6 +1,5 @@
-
 import { Schema, model } from "mongoose";
-import {TaCSchema} from "@schemas/tac";
+import { TaCSchema } from "@schemas/tac";
 
 const tacSchema = new Schema<TaCSchema>({
   text: {

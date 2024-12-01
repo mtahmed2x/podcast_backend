@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 import SubCategory from "@models/subCategory";
-import {CategorySchema} from "@schemas/category";
+import { CategorySchema } from "@schemas/category";
 
 const categorySchema = new Schema<CategorySchema>({
   title: {

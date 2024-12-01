@@ -1,21 +1,17 @@
-import { Document, Schema, Types, model } from "mongoose";
-import {FavoriteSchema} from "@schemas/favorite";
+import { Schema, model } from "mongoose";
+import { FavoriteSchema } from "@schemas/favorite";
 
-const favoriteSchema = new Schema<FavoriteSchema>(
-  {
-    user: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    podcast: {
-      type: Schema.Types.ObjectId,
-      ref: "Podcast",
-      required: true,
-    },
+const favoriteSchema = new Schema<FavoriteSchema>({
+  user: {
+    type: Schema.Types.ObjectId,
+    required: true,
   },
-  { timestamps: true }
-);
+  podcasts: [
+    {
+      type: Schema.Types.ObjectId,
+    },
+  ],
+});
 
 const Favorite = model<FavoriteSchema>("Favorite", favoriteSchema);
 export default Favorite;

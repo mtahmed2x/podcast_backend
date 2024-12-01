@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import {PlaylistSchema} from "@schemas/playlist";
+import { PlaylistSchema } from "@schemas/playlist";
 
 const playlistSchema = new Schema<PlaylistSchema>(
   {
@@ -21,7 +21,7 @@ const playlistSchema = new Schema<PlaylistSchema>(
       unique: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Playlist = model<PlaylistSchema>("Playlist", playlistSchema);

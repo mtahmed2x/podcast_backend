@@ -15,18 +15,14 @@ type ImageMetadata = {
   size: number;
 };
 
-export const getAudioMetadata = async (
-  filePath: string
-): Promise<AudioMetadata> => {
+export const getAudioMetadata = async (filePath: string): Promise<AudioMetadata> => {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (error, metadata) => {
       if (error) {
         return reject(`Error reading audio file: ${error.message}`);
       }
       const formatData = metadata.format;
-      const streamData = metadata.streams.find(
-        (stream) => stream.codec_type === "audio"
-      );
+      const streamData = metadata.streams.find((stream) => stream.codec_type === "audio");
       if (!streamData || !formatData) {
         return reject("No audio stream found in file.");
       }
@@ -42,9 +38,7 @@ export const getAudioMetadata = async (
   });
 };
 
-export const getImageMetadata = async (
-  filePath: string
-): Promise<ImageMetadata> => {
+export const getImageMetadata = async (filePath: string): Promise<ImageMetadata> => {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (error, metadata) => {
       if (error) {
@@ -57,8 +51,7 @@ export const getImageMetadata = async (
       }
 
       const streamData = metadata.streams.find(
-        (stream) =>
-          stream.codec_type === "video" || stream.codec_type === "image"
+        (stream) => stream.codec_type === "video" || stream.codec_type === "image",
       );
 
       if (!formatData || !streamData) {

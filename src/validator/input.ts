@@ -10,9 +10,7 @@ export const AuthValidatorSchema = z
       .refine((value) => /[a-z]/.test(value))
       .refine((value) => /[A-Z]/.test(value)),
     confirmPassword: z.string(),
-    role: z
-      .nativeEnum(Role)
-      .refine((value) => Object.values(Role).includes(value)),
+    role: z.nativeEnum(Role).refine((value) => Object.values(Role).includes(value)),
     verificationOTP: z.string().optional(),
     verificationOTPExpire: z.date().nullish(),
     isVerified: z.boolean().default(false),

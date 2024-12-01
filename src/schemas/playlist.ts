@@ -1,7 +1,7 @@
-import {Document, Types} from "mongoose";
+import { Document, Types } from "mongoose";
 
 export type PlaylistSchema = Document & {
-    user: Types.ObjectId;
-    podcasts: Types.ObjectId[];
-    title: string;
+  user: Types.ObjectId;
+  podcasts: Types.ObjectId[];
+  title: string;
 };
