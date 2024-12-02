@@ -4,10 +4,6 @@ import httpStatus from "http-status";
 import Category from "@models/category";
 import createError from "http-errors";
 
-type CategoryPayload = {
-  title: string;
-};
-
 const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const title = req.body.title;
   const [error, category] = await to(Category.create({ title }));
