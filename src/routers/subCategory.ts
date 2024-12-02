@@ -6,9 +6,9 @@ const router = express.Router();
 
 router.post("/create", authorize, isAdmin, SubCategoryController.create);
 router.get("/", authorize, SubCategoryController.getAll);
-router.get("/:id", authorize, SubCategoryController.getById);
+router.get("/:id", authorize, SubCategoryController.get);
 router.put("/update/:id", authorize, isAdmin, SubCategoryController.update);
 router.delete("/delete/:id", authorize, isAdmin, SubCategoryController.remove);
-router.get("/:id/podcasts", authorize, SubCategoryController.getAllPodcasts);
+router.get("/:id/podcasts", authorize, SubCategoryController.getPodcasts);
 
 export default router;

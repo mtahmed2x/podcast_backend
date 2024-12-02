@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import { SubscriptionSchema } from "@schemas/subscription";
+import { SubscriptionStatus } from "@shared/enums";
 
 const subscriptionSchema = new Schema<SubscriptionSchema>(
   {
@@ -21,7 +22,7 @@ const subscriptionSchema = new Schema<SubscriptionSchema>(
     },
     status: {
       type: String,
-      enum: ["active", "inactive", "pending"],
+      enum: SubscriptionStatus,
     },
     startDate: {
       type: Date,

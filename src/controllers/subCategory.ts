@@ -1,98 +1,99 @@
 import to from "await-to-ts";
-import { Request, Response } from "express";
-import handleError from "@utils/handleError";
+import { NextFunction, Request, Response } from "express";
 import Category from "@models/category";
 import SubCategory from "@models/subCategory";
 import { Types } from "mongoose";
+import createError from "http-errors";
+import httpStatus from "http-status";
 
-type SubCategoryPayload = {
-  categoryId?: string;
-  title: string;
-};
-
-type Params = {
-  id: string;
-};
-
-const create = async (req: Request<{}, {}, SubCategoryPayload>, res: Response): Promise<any> => {
+const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   let error, category, subCategory;
   const { categoryId, title } = req.body;
 
   [error, category] = await to(Category.findById(categoryId));
-  if (error) return handleError(error, res);
-  if (!category) return res.status(404).json({ error: "Category not found!" });
+  if (error) return next(error);
+  if (!category) return next(createError(httpStatus.NOT_FOUND, "Category not found!"));
 
   [error, subCategory] = await to(SubCategory.create({ title }));
-  if (error) return handleError(error, res);
+  if (error) return next(error);
 
   category.subCategories.push(subCategory._id as Types.ObjectId);
   [error] = await to(category.save());
-  if (error) return handleError(error, res);
+  if (error) return next(error);
 
-  return res.status(201).json({ message: "SubCategory created successfully", data: subCategory });
+  return res.status(httpStatus.CREATED).json({ message: "Success", data: subCategory });
 };
 
-const getAll = async (req: Request, res: Response): Promise<any> => {
-  const [error, subCategories] = await to(SubCategory.find().populate("podcasts").lean());
-  if (error) return handleError(error, res);
-  return res.status(200).json({ SubCategories: subCategories });
-};
-
-const getById = async (req: Request<Params>, res: Response): Promise<any> => {
+const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   const [error, subCategory] = await to(SubCategory.findById(id).populate("podcasts").lean());
-  if (error) return handleError(error, res);
+  if (error) return next(error);
   if (!subCategory) return res.status(404).json({ error: "SubCategory not found!" });
-  return res.status(200).json({ SubCategory: subCategory });
+  return res.status(httpStatus.OK).json({ message: "Success", data: subCategory });
 };
 
-const update = async (req: Request<Params, {}, SubCategoryPayload>, res: Response): Promise<any> => {
+const getAll = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const skip = (page - 1) * limit;
+
+  const [error, subCategories] = await to(SubCategory.find().populate("podcasts").skip(skip).limit(limit).lean());
+  if (error) return next(error);
+  if (!subCategories) return next(createError(httpStatus.NOT_FOUND, "No Subcategories Found"));
+  return res.status(httpStatus.OK).json({ message: "Success", data: subCategories });
+};
+
+const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   const title = req.body.title;
   const [error, subCategory] = await to(
     SubCategory.findOneAndUpdate({ _id: id }, { $set: { title: title } }, { new: true }),
   );
-  if (error) return handleError(error, res);
-  if (!subCategory) return res.status(404).json({ error: "SubCategory not found!" });
-  return res.status(200).json({
-    SubCategory: subCategory,
-  });
+  if (error) return next(error);
+  if (!subCategory) return next(createError(httpStatus.NOT_FOUND, "SubCategory not found"));
+  return res.status(httpStatus.OK).json({ message: "Success", data: subCategory });
 };
 
-const remove = async (req: Request<Params>, res: Response): Promise<any> => {
+const remove = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   const [error, subCategory] = await to(SubCategory.findByIdAndDelete(id));
-  if (error) return handleError(error, res);
-  if (!subCategory) return res.status(404).json({ error: "SubCategory not found!" });
+  if (error) return next(error);
+  if (!subCategory) return next(createError(httpStatus.NOT_FOUND, "SubCategory not found"));
   const category = await Category.findOneAndUpdate(
     { subCategories: id },
     { $pull: { subCategories: id } },
     { new: true },
   );
-  if (!category) return res.status(404).json({ error: "Category not found!" });
-  return res.status(200).json({
-    message: "SubCategory deleted successfully!",
-  });
+  if (!category) return next(createError(httpStatus.NOT_FOUND, "Category Not Found"));
+  return res.status(httpStatus.OK).json({ message: "Success" });
 };
 
-const getAllPodcasts = async (req: Request<Params>, res: Response): Promise<any> => {
+const getPodcasts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
-  const [error, podcasts] = await to(SubCategory.findById(id).populate("podcasts"));
-  if (error) return handleError(error, res);
-  if (!podcasts) return res.status(404).json({ error: "SubCategory not found!" });
-  return res.status(200).json({
-    message: "Successfully fetched all podcasts of the SubCategory",
-    data: podcasts,
-  });
+  let error, subCategory, podcasts;
+  [error, subCategory] = await to(SubCategory.findById(id));
+  if (error) return next(error);
+  if (!subCategory) return next(createError(httpStatus.NOT_FOUND, "SubCategory not found"));
+
+  [error, podcasts] = await to(
+    subCategory.populate({
+      path: "podcasts",
+      populate: { path: "creator", select: "user", populate: { path: "user", select: "name -_id" } },
+    }),
+  );
+  if (error) return next(error);
+  if (!podcasts) return next(createError(httpStatus.NOT_FOUND, "No Podcasts found in the subCategory"));
+
+  return res.status(httpStatus.OK).json({ message: "Success", data: podcasts });
 };
 
 const SubCategoryController = {
   create,
   getAll,
-  getById,
+  get,
   update,
   remove,
-  getAllPodcasts,
+  getPodcasts,
 };
 
 export default SubCategoryController;

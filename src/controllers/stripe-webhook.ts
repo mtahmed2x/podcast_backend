@@ -4,6 +4,7 @@ import createError from "http-errors";
 import to from "await-to-ts";
 import Subscription from "@models/subscription";
 import httpStatus from "http-status";
+import { SubscriptionStatus } from "@shared/enums";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -21,7 +22,7 @@ const webhook = async (req: Request, res: Response, next: NextFunction): Promise
     }
   }
 
-  let error, subscriptionId;
+  let error, subscriptionId, invoice;
   switch (event.type) {
     case "checkout.session.completed":
       let subscription;
@@ -37,16 +38,52 @@ const webhook = async (req: Request, res: Response, next: NextFunction): Promise
       break;
 
     case "invoice.payment_succeeded":
-      const invoice = event.data.object;
+      invoice = event.data.object;
       subscriptionId = invoice.subscription;
       [error] = await to(
         Subscription.findOneAndUpdate(
           { stripeSubscriptionId: subscriptionId },
-          { $set: { status: "active" } },
+          { $set: { status: SubscriptionStatus.ACTIVE } },
           { new: true },
         ),
       );
       if (error) return next(error);
+      break;
+    case "invoice_payment_failed":
+      invoice = event.data.object;
+      subscriptionId = invoice.subscription;
+      [error] = await to(
+        Subscription.findOneAndUpdate(
+          { stripeSubscriptionId: subscriptionId },
+          { $set: { status: SubscriptionStatus.PAYMENT_FAILED } },
+          { new: true },
+        ),
+      );
+      if (error) return next(error);
+      break;
+    case "customer.subscription.deleted":
+      invoice = event.data.object;
+      subscriptionId = invoice.id;
+
+      if (invoice.cancellation_details?.canceled_at) {
+        [error] = await to(
+          Subscription.findOneAndUpdate(
+            { stripeSubscriptionId: subscriptionId },
+            { $set: { status: SubscriptionStatus.AUTO_CANCELED } },
+            { new: true },
+          ),
+        );
+        if (error) return next(error);
+      } else {
+        [error] = await to(
+          Subscription.findOneAndUpdate(
+            { stripeSubscriptionId: subscriptionId },
+            { $set: { status: SubscriptionStatus.CANCELED } },
+            { new: true },
+          ),
+        );
+        if (error) return next(error);
+      }
       break;
   }
 };

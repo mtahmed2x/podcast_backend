@@ -1,12 +1,9 @@
 import to from "await-to-ts";
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
-import Category from "@models/category";
 import createError from "http-errors";
-
-type CategoryPayload = {
-  title: string;
-};
+import Category from "@models/category";
+import Podcast from "@models/podcast";
 
 const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const title = req.body.title;
@@ -72,19 +69,19 @@ const getSubCategories = async (req: Request, res: Response, next: NextFunction)
   });
 };
 
-// const getAllPodcasts = async (
-//   req: Request<Params>,
-//   res: Response
-// ): Promise<any> => {
-//   const id = req.params.id;
-//   const [error, podcasts] = await to(
-//     Category.findById(id).populate("podcasts").lean()
-//   );
-//   if (error) return handleError(error, res);
-//   return res.status(200).json({
-//     data: podcasts,
-//   });
-// };
+const getPodcasts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const id = req.params.id;
+  const [error, podcasts] = await to(
+    Podcast.find({ category: id }).populate({
+      path: "creator",
+      select: "user",
+      populate: { path: "user", select: "name -_id" },
+    }),
+  );
+  if (error) return next(error);
+  if (!podcasts) return next(createError(httpStatus.NOT_FOUND, "No podcasts found in the category"));
+  return res.status(httpStatus.OK).json({ message: "Success", data: podcasts });
+};
 
 const CategoryController = {
   create,
@@ -93,7 +90,7 @@ const CategoryController = {
   update,
   remove,
   getSubCategories,
-  // getAllPodcasts,
+  getPodcasts,
 };
 
 export default CategoryController;

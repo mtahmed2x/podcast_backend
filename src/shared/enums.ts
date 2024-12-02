@@ -9,3 +9,11 @@ export enum Subject {
   COMMENT = "comment",
   PLAYLIST = "playlist",
 }
+
+export enum SubscriptionStatus {
+  ACTIVE = "active",
+  PENDING = "pending",
+  PAYMENT_FAILED = "payment_failed",
+  CANCELED = "canceled",
+  AUTO_CANCELED = "canceled_due_to_failed_payments",
+}

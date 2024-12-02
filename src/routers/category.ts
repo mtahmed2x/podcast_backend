@@ -10,6 +10,6 @@ CategoryRouter.get("/:id", authorize, CategoryController.get);
 CategoryRouter.put("/update/:id", authorize, isAdmin, CategoryController.update);
 CategoryRouter.delete("/delete/:id", authorize, isAdmin, CategoryController.remove);
 CategoryRouter.get("/:id/sub-categories", authorize, CategoryController.getSubCategories);
-// CategoryRouter.get("/:id/podcasts", CategoryController.getAllPodcasts);
+CategoryRouter.get("/:id/podcasts", authorize, CategoryController.getPodcasts);
 
 export default CategoryRouter;

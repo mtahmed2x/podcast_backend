@@ -7,6 +7,7 @@ import createError from "http-errors";
 import { NextFunction, Request, Response } from "express";
 import { Types } from "mongoose";
 import httpStatus from "http-status";
+import { SubscriptionStatus } from "@shared/enums";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -24,7 +25,7 @@ const create = async (req: Request<Params>, res: Response, next: NextFunction): 
     Subscription.create({
       user: user.authId,
       plan: plan!._id,
-      status: "active",
+      status: SubscriptionStatus.ACTIVE,
     }),
   );
   if (error) next(error);
@@ -80,7 +81,7 @@ const upgrade = async (req: Request<Params>, res: Response, next: NextFunction):
 
   subscription.plan = plan!._id as Types.ObjectId;
   subscription.stripeCustomerId = customerId;
-  subscription.status = "pending";
+  subscription.status = SubscriptionStatus.PENDING;
 
   [error] = await to(subscription.save());
   if (error) return next(error);
@@ -107,7 +108,7 @@ const cancel = async (req: Request, res: Response, next: NextFunction): Promise<
 
   subscription.plan = plan!._id as Types.ObjectId;
   subscription.stripeSubscriptionId = "";
-  subscription.status = "active";
+  subscription.status = SubscriptionStatus.ACTIVE;
 
   [error] = await to(subscription.save());
   if (error) return next(error);

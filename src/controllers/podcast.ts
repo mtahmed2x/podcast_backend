@@ -9,10 +9,10 @@ import Category from "@models/category";
 import SubCategory from "@models/subCategory";
 import Creator from "@models/creator";
 
-import handleError from "@utils/handleError";
 import mongoose from "mongoose";
 import httpStatus from "http-status";
 import createError from "http-errors";
+import { addPodcast } from "@controllers/history";
 
 type PodcastFiles = Express.Request & {
   files: { [fieldname: string]: Express.Multer.File[] };
@@ -146,55 +146,52 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
   });
 };
 
-const update = async (req: Request, res: Response): Promise<any> => {
-  // const podcastReq = req as PodcastRequest;
-  // let error;
-  // const { id } = req.params;
-  // const { cover } = podcastReq.files;
-  // const { categoryId, subCategoryId, title, description, location } = podcastReq.body;
-  //
-  // const updateFields: {
-  //   category?: string;
-  //   subCategory?: string;
-  //   title?: string;
-  //   description?: string;
-  //   location?: string;
-  //   cover?: string;
-  // } = {};
-  //
-  // if (categoryId) {
-  //   let category;
-  //   [error, category] = await to(Category.findById(categoryId));
-  //   if (error) handleError(error, res);
-  //   if (!category) return res.status(404).json({ error: "Category not found!" });
-  //   updateFields.category = categoryId;
-  // }
-  // if (subCategoryId) {
-  //   let subCategory;
-  //   [error, subCategory] = await to(SubCategory.findById(subCategoryId));
-  //   if (error) handleError(error, res);
-  //   if (!subCategory) {
-  //     return res.status(404).json({ error: "SubCategory not found!" });
-  //   }
-  //   updateFields.subCategory = subCategoryId;
-  // }
-  // if (title) updateFields.title = title;
-  // if (description) updateFields.description = description;
-  // if (location) updateFields.location = location;
-  // if (cover) updateFields.cover = cover[0].path;
-  //
-  // let podcast;
-  // [error, podcast] = await to(Podcast.findByIdAndUpdate(id, { $set: updateFields }, { new: true }));
-  // if (error) return res.status(500).json({ error: error.message });
-  // res.status(200).json({ message: "Podcast updated successfully", podcast });
+const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const { categoryId, subCategoryId, title, description, location } = req.body;
+  const { cover } = (req as PodcastFiles).files;
+  let error, podcast;
+  const { id } = req.params;
+
+  const updateFields: {
+    category?: string;
+    subCategory?: string;
+    title?: string;
+    description?: string;
+    location?: string;
+    cover?: string;
+  } = {};
+
+  if (categoryId) {
+    let category;
+    [error, category] = await to(Category.findById(categoryId));
+    if (error) return next(error);
+    if (!category) return next(createError(httpStatus.NOT_FOUND, "Category not found!"));
+    updateFields.category = categoryId;
+  }
+  if (subCategoryId) {
+    let subCategory;
+    [error, subCategory] = await to(SubCategory.findById(subCategoryId));
+    if (error) return next(error);
+    if (!subCategory) return next(createError(httpStatus.NOT_FOUND, "subCategory not found!"));
+    updateFields.subCategory = subCategoryId;
+  }
+  if (title) updateFields.title = title;
+  if (description) updateFields.description = description;
+  if (location) updateFields.location = location;
+  if (cover) updateFields.cover = cover[0].path;
+
+  [error, podcast] = await to(Podcast.findByIdAndUpdate(id, { $set: updateFields }, { new: true }));
+  if (error) return next(error);
+  res.status(httpStatus.OK).json({ message: "Success", data: podcast });
 };
 
-const remove = async (req: Request, res: Response): Promise<any> => {
+const remove = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   let error, podcast;
   const { id } = req.params;
   [error, podcast] = await to(Podcast.findById(id));
-  if (error) return handleError(error, res);
+  if (error) return next(error);
   if (!podcast) return res.status(400).json({ error: "Podcast Not Found" });
+
   const coverPath = path.resolve(podcast.cover!);
   const audioPath = path.resolve(podcast.audio);
 
@@ -210,24 +207,24 @@ const remove = async (req: Request, res: Response): Promise<any> => {
       return res.status(500).json({ error: "Failed to delete file from storage" });
     }
   });
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    await Creator.findByIdAndUpdate(podcast.creator, { $pull: { podcasts: id } });
+    await SubCategory.findByIdAndUpdate(podcast.subCategory, { $pull: { podcasts: id } });
+    await Podcast.findByIdAndDelete(id);
 
-  [error] = await to(Creator.findByIdAndUpdate(podcast.creator, { $pull: { podcasts: id } }));
-  if (error) return handleError(error, res);
+    await session.commitTransaction();
+    await session.endSession();
+  } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+      await session.endSession();
+    }
+    return next(error);
+  }
 
-  [error] = await to(Category.findByIdAndUpdate(podcast.category, { $pull: { podcasts: id } }));
-  if (error) return handleError(error, res);
-
-  [error] = await to(
-    SubCategory.findByIdAndUpdate(podcast.subCategory, {
-      $pull: { podcasts: id },
-    }),
-  );
-  if (error) return handleError(error, res);
-
-  [error] = await to(Podcast.findByIdAndDelete(id));
-  if (error) return handleError(error, res);
-
-  res.status(200).json({ message: "Podcast deleted successfully" });
+  res.status(httpStatus.OK).json({ message: "Success" });
 };
 
 export const updateLikeCount = async (podcastId: string, value: number): Promise<number> => {
@@ -266,20 +263,32 @@ const fetchPodcastsSorted = async (
   return res.status(httpStatus.OK).json({ message: "Success", data: podcasts });
 };
 
-export const mostLiked = (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  return fetchPodcastsSorted("totalLikes", req, res, next);
+export const mostLiked = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  return await fetchPodcastsSorted("totalLikes", req, res, next);
 };
 
-export const mostCommented = (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  return fetchPodcastsSorted("totalComments", req, res, next);
+export const mostCommented = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  return await fetchPodcastsSorted("totalComments", req, res, next);
 };
 
-export const mostFavorited = (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  return fetchPodcastsSorted("totalFavorites", req, res, next);
+export const mostFavorited = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  return await fetchPodcastsSorted("totalFavorites", req, res, next);
 };
 
-export const mostViewed = (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  return fetchPodcastsSorted("totalViews", req, res, next);
+export const mostViewed = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  return await fetchPodcastsSorted("totalViews", req, res, next);
+};
+
+const play = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const user = req.user;
+  const id = req.params.id;
+  const [error, podcast] = await to(Podcast.findById(id).lean());
+  if (error) return next(error);
+  if (!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not Found"));
+  await addPodcast(user.userId, podcast._id.toString());
+  podcast.totalViews += 1;
+  await podcast.save();
+  return res.status(httpStatus.OK).json({ message: "Success", data: podcast.audio });
 };
 
 const PodcastController = {
@@ -292,6 +301,7 @@ const PodcastController = {
   mostCommented,
   mostFavorited,
   mostViewed,
+  play,
 };
 
 export default PodcastController;

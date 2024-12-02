@@ -11,20 +11,6 @@ router.get("/", PodcastController.getAll);
 router.get("/:id", ParamValidator, PodcastController.get);
 router.put("/update/:id", authorize, ParamValidator, handleFileUpload, PodcastController.update);
 router.delete("/delete/:id", ParamValidator, PodcastController.remove);
-
-// router.post(
-//   "/comment/:id",
-//   authorize(),
-//   isActive() || isCreator(),
-//   PodcastController.commentPodcast
-// );
-// router.post(
-//   "/favorite/:id",
-//   authorize(),
-//   isActive(),
-//   PodcastController.favoritePodcast
-// );
-
-// router.get("/play/:id", PodcastController.playPodcast);
+router.post("/play/:id", PodcastController.play);
 
 export default router;
