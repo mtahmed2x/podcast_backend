@@ -22,7 +22,7 @@ const displayAllUsers = async (req: Request, res: Response, next: NextFunction):
       .then((users) => users.filter((user) => user.auth)),
   );
   if (error) return next(error);
-  return res.status(200).json({ message: "Successful", users });
+  return res.status(200).json({ message: "Successful", data: users });
 };
 
 const displayAllCreators = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -33,7 +33,7 @@ const displayAllCreators = async (req: Request, res: Response, next: NextFunctio
     }),
   );
   if (error) return next(error);
-  return res.status(200).json({ message: "Successful", creators });
+  return res.status(200).json({ message: "Successful", data: creators });
 };
 
 const adminProfile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {

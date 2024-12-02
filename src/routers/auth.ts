@@ -1,15 +1,17 @@
 import AuthController from "@controllers/auth";
 import express from "express";
-import { authorize, recoveryAuthorize } from "@middlewares/authorization";
-import { validateRegisterInput } from "@middlewares/validator";
+import { authorize, isUserOrCreator, recoveryAuthorize, refreshAuthorize } from "@middlewares/authorization";
+import { validateRegisterInput } from "@middlewares/validation";
 
-const authRouter = express.Router();
+const router = express.Router();
 
-authRouter.post("/register", validateRegisterInput, AuthController.register);
-authRouter.post("/activate", AuthController.activate);
-authRouter.post("/login", AuthController.login);
-authRouter.post("/forgot-password", AuthController.forgotPassword);
-authRouter.post("/verify-otp", AuthController.verifyOTP);
-authRouter.post("/change-password", recoveryAuthorize, AuthController.changePassword);
+router.post("/register", validateRegisterInput, AuthController.register);
+router.post("/activate", AuthController.activate);
+router.post("/login", AuthController.login);
+router.post("/forgot-password", AuthController.forgotPassword);
+router.post("/verify-otp", AuthController.verifyOTP);
+router.post("/change-password", recoveryAuthorize, AuthController.changePassword);
+router.post("/refresh", refreshAuthorize, AuthController.getAccessToken);
+router.delete("/delete", authorize, isUserOrCreator, AuthController.remove);
 
-export default authRouter;
+export default router;

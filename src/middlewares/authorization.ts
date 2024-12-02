@@ -1,6 +1,6 @@
 import to from "await-to-ts";
 import "dotenv/config";
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import createError from "http-errors";
 
 import Auth from "@models/auth";
@@ -44,6 +44,8 @@ export const getUserInfo = async (authId: string): Promise<DecodedUser | null> =
 const hasAccess = (roles: Role[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const user = req.user;
+    console.log(user);
+    console.log(roles);
     if (roles.includes(user.role as Role)) return next();
     return next(createError(403, "Access Denied."));
   };
@@ -80,4 +82,5 @@ export const recoveryAuthorize = authorizeToken(process.env.JWT_RECOVERY_SECRET!
 
 export const isAdmin = hasAccess([Role.ADMIN]);
 export const isCreator = hasAccess([Role.CREATOR]);
+export const isUserOrCreator = hasAccess([Role.USER, Role.CREATOR]);
 export const isAdminOrCreator = hasAccess([Role.ADMIN, Role.CREATOR]);

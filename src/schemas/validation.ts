@@ -1,5 +1,16 @@
 import { z } from "zod";
 import { Role } from "@shared/enums";
+
+export const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, {
+  message: "Invalid ObjectId format",
+});
+
+export const FileSchema = z.object({
+  path: z.string().min(1, "File path is required"),
+  mimetype: z.string().min(1, "Mimetype is required"),
+  size: z.number().min(1, "File size must be greater than 0"),
+});
+
 export const AuthValidatorSchema = z
   .object({
     email: z.string().email(),
@@ -27,10 +38,10 @@ export const AuthValidatorSchema = z
     }
   });
 
-export const TaCValidatorSchema = z.object({
-  text: z.string(),
-});
-
-export const AboutValidatorSchema = z.object({
-  text: z.string(),
+export const createPodcastValidationSchema = z.object({
+  categoryId: ObjectIdSchema,
+  subCategoryId: ObjectIdSchema,
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  location: z.string().min(1, "Location is required"),
 });

@@ -1,75 +1,72 @@
 import to from "await-to-ts";
-import { Request, Response } from "express";
-import handleError from "@utils/handleError";
+import { NextFunction, Request, Response } from "express";
+import httpStatus from "http-status";
 import Category from "@models/category";
+import createError from "http-errors";
 
 type CategoryPayload = {
   title: string;
 };
 
-type Params = {
-  id: string;
-};
-
-const create = async (req: Request<{}, {}, CategoryPayload>, res: Response): Promise<any> => {
+const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const title = req.body.title;
   const [error, category] = await to(Category.create({ title }));
-  if (error) return handleError(error, res);
-  return res.status(201).json({
-    message: "Category created.",
-    data: category,
-  });
+  if (error) return next(error);
+  return res.status(httpStatus.CREATED).json({ message: "Category created.", data: category });
 };
 
-const getAll = async (req: Request, res: Response): Promise<any> => {
-  const [error, categories] = await to(
-    Category.find().populate({ path: "subCategories", select: "title" }).select("title subCategories"),
-  );
-  if (error) return handleError(error, res);
-  return res.status(200).json({
-    message: "Successfully fetched all categories",
-    data: categories,
-  });
-};
-
-const getById = async (req: Request<Params>, res: Response): Promise<any> => {
+const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   const [error, category] = await to(Category.findById(id).select("title subCategories").lean());
-  if (error) return handleError(error, res);
-  return res.status(200).json({
-    message: "Successfully fetched the category",
-    data: category,
-  });
+  if (error) return next(error);
+  if (!category) return next(createError(httpStatus.NOT_FOUND, "Category Not Found"));
+  return res.status(httpStatus.OK).json({ message: "Success", data: category });
 };
 
-const update = async (req: Request<Params, {}, CategoryPayload>, res: Response): Promise<any> => {
+const getAll = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+
+  const [error, categories] = await to(
+    Category.find()
+      .populate({
+        path: "subCategories",
+        select: "title",
+      })
+      .select("title subCategories")
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+  );
+  if (error) return next(error);
+  if (!categories) return next(createError(httpStatus.NOT_FOUND, "No categories found"));
+  return res.status(httpStatus.OK).json({ message: "Success", data: categories });
+};
+
+const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   const title = req.body.title;
   const [error, category] = await to(Category.findOneAndUpdate({ _id: id }, { $set: { title: title } }, { new: true }));
-  if (error) return handleError(error, res);
-  if (!category) return res.status(404).json({ error: "Category not found!" });
-  return res.status(200).json({
-    message: "Category changed successfully",
-    data: category,
-  });
+  if (error) return next(error);
+  if (!category) return next(createError(httpStatus.NOT_FOUND, "Category Not Found"));
+  return res.status(httpStatus.OK).json({ message: "Success", data: category });
 };
 
-const remove = async (req: Request<Params>, res: Response): Promise<any> => {
+const remove = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   const [error, category] = await to(Category.findOneAndDelete({ _id: id }));
-  if (error) return handleError(error, res);
-  if (!category) return res.status(404).json({ error: "Category not found!" });
-  return res.status(200).json({
-    message: "Category deleted successfully!",
-  });
+  if (error) return next(error);
+  if (!category) return next(createError(httpStatus.NOT_FOUND, "Category Not Found"));
+  return res.status(httpStatus.OK).json({ message: "Success" });
 };
 
-const getAllSubCategories = async (req: Request<Params>, res: Response): Promise<any> => {
+const getSubCategories = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   const [error, subCategories] = await to(
     Category.findById(id).populate({ path: "subCategories", select: "title" }).select("subCategories").lean(),
   );
-  if (error) return handleError(error, res);
+  if (error) return next(error);
+  if (!subCategories) return next(createError(httpStatus.NOT_FOUND, "No SubCategories found"));
   return res.status(200).json({
     data: subCategories,
   });
@@ -91,11 +88,11 @@ const getAllSubCategories = async (req: Request<Params>, res: Response): Promise
 
 const CategoryController = {
   create,
+  get,
   getAll,
-  getById,
   update,
   remove,
-  getAllSubCategories,
+  getSubCategories,
   // getAllPodcasts,
 };
 

@@ -33,14 +33,14 @@ const create = async (req: Request<{}, {}, SubCategoryPayload>, res: Response): 
 };
 
 const getAll = async (req: Request, res: Response): Promise<any> => {
-  const [error, subCategories] = await to(SubCategory.find().select("title").lean());
+  const [error, subCategories] = await to(SubCategory.find().populate("podcasts").lean());
   if (error) return handleError(error, res);
   return res.status(200).json({ SubCategories: subCategories });
 };
 
 const getById = async (req: Request<Params>, res: Response): Promise<any> => {
   const id = req.params.id;
-  const [error, subCategory] = await to(SubCategory.findById(id).select("title").lean());
+  const [error, subCategory] = await to(SubCategory.findById(id).populate("podcasts").lean());
   if (error) return handleError(error, res);
   if (!subCategory) return res.status(404).json({ error: "SubCategory not found!" });
   return res.status(200).json({ SubCategory: subCategory });

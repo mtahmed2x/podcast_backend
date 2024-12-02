@@ -1,16 +1,16 @@
 import express from "express";
 import PodcastController from "@controllers/podcast";
-import { authorize } from "@middlewares/authorization";
+import { authorize, isCreator } from "@middlewares/authorization";
 import { handleFileUpload } from "@middlewares/uploadFile";
-import { categoryValidator, subCategoryValidator } from "@middlewares/docValidator";
+import { createPodcastValidator, ParamValidator } from "@middlewares/validation";
 
 const router = express.Router();
 
-router.post("/create", authorize, handleFileUpload, categoryValidator, subCategoryValidator, PodcastController.create);
+router.post("/create", authorize, isCreator, handleFileUpload, createPodcastValidator, PodcastController.create);
 router.get("/", PodcastController.getAll);
-router.get("/:id", PodcastController.getById);
-router.put("/update/:id", authorize, handleFileUpload, PodcastController.update);
-router.delete("/delete/:id", PodcastController.remove);
+router.get("/:id", ParamValidator, PodcastController.get);
+router.put("/update/:id", authorize, ParamValidator, handleFileUpload, PodcastController.update);
+router.delete("/delete/:id", ParamValidator, PodcastController.remove);
 
 // router.post(
 //   "/comment/:id",
