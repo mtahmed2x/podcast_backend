@@ -2,8 +2,11 @@ import to from "await-to-ts";
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import createError from "http-errors";
+<<<<<<< HEAD
 import Category from "@models/category";
 import Podcast from "@models/podcast";
+=======
+>>>>>>> 64cbd455a13b0948317530b77487bee3c8f6d69b
 
 const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const title = req.body.title;
