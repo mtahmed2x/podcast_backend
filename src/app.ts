@@ -16,8 +16,8 @@ import FaqRouter from "@routers/faq";
 import TaCRouter from "@routers/tac";
 import AboutRouter from "@routers/about";
 import WebHookRouter from "@routers/stripe-webhook";
-import FavoriteRouter from "@routers/favorite";
 import HistoryRouter from "@routers/history";
+import FavoriteRouter from "@routers/favorite";
 /* Import End */
 
 const app = express();
