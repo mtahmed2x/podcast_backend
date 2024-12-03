@@ -10,6 +10,8 @@ import { Subject } from "@shared/enums";
 
 let io: Server | undefined;
 
+let a = 9;
+
 type LikePodcastData = {
   podcastId: string;
 };
