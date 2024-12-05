@@ -9,14 +9,15 @@ import { FavoriteSchema } from "@schemas/favorite";
 
 const ensureFavorite = async (userId: string, isPopulate: boolean): Promise<FavoriteSchema> => {
   let error, favorite;
-  if (isPopulate)
+  if (isPopulate) {
     [error, favorite] = await to(
-      Favorite.findOne({ user: userId })
-        .populate({ path: "podcasts", select: "title cover creator" })
-        .populate({ path: "creator", select: "user" })
-        .populate({ path: "user", select: "name" }),
+      Favorite.findOne({ user: userId }).populate({
+        path: "podcasts",
+        select: "creator cover title",
+        populate: { path: "creator", select: "user -_id", populate: { path: "user", select: "name -_id" } },
+      }),
     );
-  else [error, favorite] = await to(Favorite.findOne({ user: userId }));
+  } else [error, favorite] = await to(Favorite.findOne({ user: userId }));
   if (error) throw error;
   if (!favorite) {
     [error, favorite] = await to(Favorite.create({ user: userId }));
@@ -27,7 +28,23 @@ const ensureFavorite = async (userId: string, isPopulate: boolean): Promise<Favo
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const user = req.user;
-  const favorite = await ensureFavorite(user.userId, true);
+  const [error, favorite] = await to(
+    Favorite.findOne({ user: user.userId })
+      .populate({
+        path: "podcasts",
+        select: "creator cover title",
+        populate: {
+          path: "creator",
+          select: "user -_id",
+          populate: {
+            path: "user",
+            select: "name -_id",
+          },
+        },
+      })
+      .lean(),
+  );
+  if (error) return next(error);
   return res.status(httpStatus.OK).json({ success: true, message: "Success", data: favorite });
 };
 

@@ -86,6 +86,8 @@ type Payload = {
   verificationOTP: string;
 };
 
+const resendOTP = async (req: Request, res: Response, next: NextFunction): Promise<any> => {};
+
 const verifyEmail = async (payload: Payload): Promise<[Error | null, AuthSchema | null]> => {
   const { email, verificationOTP } = payload;
   let [error, auth] = await to(Auth.findOne({ email }).select("-password"));
@@ -190,19 +192,19 @@ const verifyOTP = async (req: Request, res: Response, next: NextFunction): Promi
   }
   const recoveryToken = generateToken(auth._id!.toString(), secret, "20m");
   if (!recoveryToken) return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "Failed"));
-  res.status(200).json({ success: true, message: "Success", data: recoveryToken });
+  res.status(200).json({ success: true, message: "Success", data: {} });
 };
 
 const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { password, confirmPassword } = req.body;
+  const { email, password, confirmPassword } = req.body;
+  const [error, auth] = await to(Auth.findOne({ email }));
+  if (error) return next(error);
+  if (!auth) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
   if (password !== confirmPassword) return next(createError(httpStatus.BAD_REQUEST, "Passwords don't match"));
-  const user = req.user;
-  const auth = await Auth.findById(user.authId!);
-  if (auth) {
-    auth!.password = await bcrypt.hash(password, 10);
-    await auth.save();
-  }
-  return res.status(httpStatus.OK).json({ success: true, message: "Success. Password changed" });
+  auth!.password = await bcrypt.hash(password, 10);
+  await auth.save();
+
+  return res.status(httpStatus.OK).json({ success: true, message: "Success. Password changed", data: {} });
 };
 
 const getAccessToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

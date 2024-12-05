@@ -11,7 +11,7 @@ router.post("/activate", emailValidator, otpValidator, AuthController.activate);
 router.post("/login", emailValidator, AuthController.login);
 router.post("/forgot-password", emailValidator, AuthController.forgotPassword);
 router.post("/verify-otp", emailValidator, otpValidator, AuthController.verifyOTP);
-router.put("/reset-password", passwordValidator, recoveryAuthorize, AuthController.resetPassword);
+router.put("/reset-password", passwordValidator, AuthController.resetPassword);
 router.put("/change-password", passwordValidator, authorize, DashboardController.changePassword);
 router.delete("/delete", authorize, isUserOrCreator, AuthController.remove);
 router.post("/refresh", refreshAuthorize, AuthController.getAccessToken);

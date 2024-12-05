@@ -9,6 +9,7 @@ const favoriteSchema = new Schema<FavoriteSchema>({
   podcasts: [
     {
       type: Schema.Types.ObjectId,
+      ref: "Podcast",
     },
   ],
 });
