@@ -9,14 +9,15 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
 import { UserSchema } from "@schemas/user";
+import { Role } from "@shared/enums";
 
 const displayAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const [error, users] = await to(
     User.find()
       .populate({
         path: "auth",
-        match: { role: "user" },
-        select: "email subscriptionType isBlocked",
+        match: { role: Role.USER },
+        select: "email role subscriptionType isBlocked",
       })
       .exec()
       .then((users) => users.filter((user) => user.auth)),

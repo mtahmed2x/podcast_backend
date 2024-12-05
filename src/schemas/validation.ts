@@ -45,3 +45,31 @@ export const createPodcastValidationSchema = z.object({
   description: z.string().min(1, "Description is required"),
   location: z.string().min(1, "Location is required"),
 });
+
+export const EmailValidationSchema = z.object({
+  email: z.string().email(),
+});
+
+export const OTPValidationSchema = z.object({
+  verificationOTP: z.string().length(6),
+});
+
+export const PasswordValidationSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8)
+      .max(30)
+      .refine((value) => /[a-z]/.test(value))
+      .refine((value) => /[A-Z]/.test(value)),
+    confirmPassword: z.string(),
+  })
+  .superRefine(({ confirmPassword, password }, ctx) => {
+    if (confirmPassword !== password) {
+      ctx.addIssue({
+        code: "custom",
+        message: "The passwords did not match",
+        path: ["confirmPassword"],
+      });
+    }
+  });

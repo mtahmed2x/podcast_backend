@@ -18,6 +18,9 @@ import AboutRouter from "@routers/about";
 import WebHookRouter from "@routers/stripe-webhook";
 import HistoryRouter from "@routers/history";
 import FavoriteRouter from "@routers/favorite";
+import LikeRouter from "@routers/like";
+import PlaylistRouter from "@routers/playlist";
+import PlaylistController from "@controllers/playlist";
 /* Import End */
 
 const app = express();
@@ -46,6 +49,8 @@ app.use("/tac", TaCRouter);
 app.use("/about", AboutRouter);
 app.use("/favorite", FavoriteRouter);
 app.use("/history", HistoryRouter);
+app.use("/like", LikeRouter);
+app.use("/playlist", PlaylistRouter);
 /* Custom Router End */
 
 /* Default Routers */

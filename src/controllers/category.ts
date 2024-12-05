@@ -5,12 +5,11 @@ import createError from "http-errors";
 import Category from "@models/category";
 import Podcast from "@models/podcast";
 
-
 const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const title = req.body.title;
   const [error, category] = await to(Category.create({ title }));
   if (error) return next(error);
-  return res.status(httpStatus.CREATED).json({ message: "Category created.", data: category });
+  return res.status(httpStatus.CREATED).json({ success: true, message: "Success", data: category });
 };
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -18,7 +17,7 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
   const [error, category] = await to(Category.findById(id).select("title subCategories").lean());
   if (error) return next(error);
   if (!category) return next(createError(httpStatus.NOT_FOUND, "Category Not Found"));
-  return res.status(httpStatus.OK).json({ message: "Success", data: category });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: category });
 };
 
 const getAll = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -38,7 +37,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
   );
   if (error) return next(error);
   if (!categories) return next(createError(httpStatus.NOT_FOUND, "No categories found"));
-  return res.status(httpStatus.OK).json({ message: "Success", data: categories });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: categories });
 };
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -47,7 +46,7 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   const [error, category] = await to(Category.findOneAndUpdate({ _id: id }, { $set: { title: title } }, { new: true }));
   if (error) return next(error);
   if (!category) return next(createError(httpStatus.NOT_FOUND, "Category Not Found"));
-  return res.status(httpStatus.OK).json({ message: "Success", data: category });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: category });
 };
 
 const remove = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -55,7 +54,7 @@ const remove = async (req: Request, res: Response, next: NextFunction): Promise<
   const [error, category] = await to(Category.findOneAndDelete({ _id: id }));
   if (error) return next(error);
   if (!category) return next(createError(httpStatus.NOT_FOUND, "Category Not Found"));
-  return res.status(httpStatus.OK).json({ message: "Success" });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success" });
 };
 
 const getSubCategories = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -81,7 +80,7 @@ const getPodcasts = async (req: Request, res: Response, next: NextFunction): Pro
   );
   if (error) return next(error);
   if (!podcasts) return next(createError(httpStatus.NOT_FOUND, "No podcasts found in the category"));
-  return res.status(httpStatus.OK).json({ message: "Success", data: podcasts });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
 };
 
 const CategoryController = {

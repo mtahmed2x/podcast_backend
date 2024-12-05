@@ -5,22 +5,23 @@ import httpStatus from "http-status";
 import createError from "http-errors";
 import bcrypt from "bcrypt";
 import "dotenv/config";
+
 import { AuthSchema } from "@schemas/auth";
-import { UserSchema } from "@schemas/user";
-import { AdminSchema } from "@schemas/admin";
-import { CreatorSchema } from "@schemas/creator";
+
 import Auth from "@models/auth";
 import User from "@models/user";
 import Creator from "@models/creator";
 import Admin from "@models/admin";
+
 import sendEmail from "@utils/sendEmail";
 import generateOTP from "@utils/generateOTP";
 import { generateToken } from "@utils/jwt";
+
 import { Role } from "@shared/enums";
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { name, email, role, dateOfBirth, address, password, confirmPassword } = req.body;
-  let error, auth, user, creator, admin;
+  let error, auth, user;
   [error, auth] = await to(Auth.findOne({ email }));
 
   if (error) return next(error);
@@ -32,9 +33,6 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
 
   const session = await mongoose.startSession();
   session.startTransaction();
-
-  type ResponseData = [AuthSchema, UserSchema, CreatorSchema?, AdminSchema?];
-  let responseData: ResponseData;
 
   try {
     auth = await Auth.create({
@@ -52,31 +50,27 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
       address: address,
     });
 
-    responseData = [auth as AuthSchema, user as UserSchema];
-
     if (role === "CREATOR") {
-      creator = await Creator.create({
+      await Creator.create({
         auth: auth._id,
         user: user._id,
       });
-      responseData.push(creator);
     }
 
     if (role === "ADMIN") {
-      admin = await Admin.create({
+      await Admin.create({
         auth: auth._id,
         user: user._id,
       });
-      responseData.push(admin);
-      await sendEmail(email, verificationOTP);
     }
-
+    await sendEmail(email, verificationOTP);
     await session.commitTransaction();
     await session.endSession();
 
     return res.status(201).json({
+      success: true,
       message: "User registered successfully!",
-      data: responseData,
+      data: {},
     });
   } catch (error) {
     if (session.inTransaction()) {
@@ -92,26 +86,47 @@ type Payload = {
   verificationOTP: string;
 };
 
-const verifyEmail = async (payload: Payload): Promise<AuthSchema> => {
+const verifyEmail = async (payload: Payload): Promise<[Error | null, AuthSchema | null]> => {
   const { email, verificationOTP } = payload;
-  let [error, auth] = await to(Auth.findOne({ email }));
-  if (error) throw error;
-  if (!auth) throw createError(httpStatus.NOT_FOUND, "User Not found");
-  if (verificationOTP !== auth.verificationOTP) throw createError(httpStatus.UNAUTHORIZED, "Wrong Verification OTP");
-  if (new Date() > auth.verificationOTPExpire!) {
-    throw createError(httpStatus.GONE, "Verification OTP has expired");
-  } else return auth;
+  let [error, auth] = await to(Auth.findOne({ email }).select("-password"));
+  if (error) return [error, null];
+  if (!auth) return [createError(httpStatus.NOT_FOUND, "Account Not found"), null];
+  if (auth.verificationOTP === null) return [createError(httpStatus.UNAUTHORIZED, "OTP Expired"), null];
+  if (verificationOTP !== auth.verificationOTP) return [createError(httpStatus.UNAUTHORIZED, "Wrong OTP"), null];
+  // if (new Date() > auth.verificationOTPExpire!) {
+  //   throw createError(httpStatus.GONE, "Verification OTP has expired");
+  // } else
+  return [null, auth];
 };
 
-const activate = async (req: Request, res: Response): Promise<any> => {
-  let auth = await verifyEmail(req.body);
-  if (auth) {
-    auth.verificationOTP = "";
-    auth.verificationOTPExpire = null;
-    auth.isVerified = true;
-    await auth.save();
-    return res.status(httpStatus.OK).json({ message: "Success" });
+const activate = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const [error, auth] = await verifyEmail(req.body);
+  if (error) return next(error);
+  if (!auth) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
+
+  auth.verificationOTP = "";
+  auth.verificationOTPExpire = null;
+  auth.isVerified = true;
+  await auth.save();
+
+  const accessSecret = process.env.JWT_ACCESS_SECRET;
+  if (!accessSecret) return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "JWT secret is not defined."));
+  const accessToken = generateToken(auth._id!.toString(), accessSecret, "96h");
+
+  const user = await User.find({ auth: auth._id });
+
+  const responseData: any = {
+    accessToken,
+    auth,
+    user,
+  };
+  let creator;
+  if (auth.role === Role.CREATOR) {
+    creator = await Creator.find({ auth: auth._id });
+    responseData.creator = creator;
   }
+
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: responseData });
 };
 
 const login = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -134,14 +149,27 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<a
   const accessToken = generateToken(auth._id!.toString(), accessSecret, "96h");
   const refreshToken = generateToken(auth._id!.toString(), refreshSecret, "96h");
 
-  return res.status(httpStatus.OK).json({ message: "Success", data: { accessToken, refreshToken } });
+  const user = await User.find({ auth: auth._id });
+
+  const responseData: any = {
+    accessToken,
+    auth,
+    user,
+  };
+  let creator;
+  if (auth.role === Role.CREATOR) {
+    creator = await Creator.find({ auth: auth._id });
+    responseData.creator = creator;
+  }
+
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: responseData });
 };
 
 const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email } = req.body;
   const [error, auth] = await to(Auth.findOne({ email }));
   if (error) return next(error);
-  if (!auth) return next(createError(httpStatus.NOT_FOUND, "User Not Found"));
+  if (!auth) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
 
   const verificationOTP = generateOTP();
   auth.verificationOTP = verificationOTP;
@@ -149,23 +177,23 @@ const forgotPassword = async (req: Request, res: Response, next: NextFunction): 
   await auth.save();
   await sendEmail(email, verificationOTP);
 
-  return res.status(httpStatus.OK).json({ message: "Success. Verification mail sent." });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success. Verification mail sent." });
 };
 
 const verifyOTP = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const auth = await verifyEmail(req.body);
-  if (auth) {
-    const secret = process.env.JWT_RECOVERY_SECRET;
-    if (!secret) {
-      return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "JWT secret is not defined."));
-    }
-    const recoveryToken = generateToken(auth._id!.toString(), secret, "20m");
-    if (!recoveryToken) return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "Failed"));
-    res.status(200).json({ message: "Success", data: recoveryToken });
+  const [error, auth] = await verifyEmail(req.body);
+  if (error) return next(error);
+  if (!auth) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
+  const secret = process.env.JWT_RECOVERY_SECRET;
+  if (!secret) {
+    return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "JWT secret is not defined."));
   }
+  const recoveryToken = generateToken(auth._id!.toString(), secret, "20m");
+  if (!recoveryToken) return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "Failed"));
+  res.status(200).json({ success: true, message: "Success", data: recoveryToken });
 };
 
-const changePassword = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { password, confirmPassword } = req.body;
   if (password !== confirmPassword) return next(createError(httpStatus.BAD_REQUEST, "Passwords don't match"));
   const user = req.user;
@@ -174,7 +202,7 @@ const changePassword = async (req: Request, res: Response, next: NextFunction): 
     auth!.password = await bcrypt.hash(password, 10);
     await auth.save();
   }
-  return res.status(httpStatus.OK).json({ message: "Success. Password changed" });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success. Password changed" });
 };
 
 const getAccessToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -185,7 +213,7 @@ const getAccessToken = async (req: Request, res: Response, next: NextFunction): 
   }
   const accessToken = generateToken(user.authId, secret, "96h");
   if (!accessToken) return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "Failed"));
-  res.status(httpStatus.OK).json({ message: "Success", data: accessToken });
+  res.status(httpStatus.OK).json({ success: true, message: "Success", data: accessToken });
 };
 
 const remove = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -208,7 +236,7 @@ const remove = async (req: Request, res: Response, next: NextFunction): Promise<
     await session.commitTransaction();
     await session.endSession();
   }
-  return res.status(httpStatus.OK).json({ message: "Successful" });
+  return res.status(httpStatus.OK).json({ success: true, message: "Successful" });
 };
 
 const AuthController = {
@@ -217,7 +245,7 @@ const AuthController = {
   login,
   forgotPassword,
   verifyOTP,
-  changePassword,
+  resetPassword,
   getAccessToken,
   remove,
 };

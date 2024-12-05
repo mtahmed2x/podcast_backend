@@ -1,5 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthValidatorSchema, createPodcastValidationSchema, FileSchema, ObjectIdSchema } from "@schemas/validation";
+import {
+  AuthValidatorSchema,
+  createPodcastValidationSchema,
+  EmailValidationSchema,
+  FileSchema,
+  ObjectIdSchema,
+  OTPValidationSchema,
+  PasswordValidationSchema,
+} from "@schemas/validation";
 import { fromZodError } from "zod-validation-error";
 import createError from "http-errors";
 import httpStatus from "http-status";
@@ -14,6 +22,30 @@ export const ParamValidator = async (req: Request, res: Response, next: NextFunc
 
 export const validateRegisterInput = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const result = AuthValidatorSchema.safeParse(req.body);
+  if (!result.success) {
+    return next(createError(httpStatus.BAD_REQUEST, fromZodError(result.error)));
+  }
+  next();
+};
+
+export const emailValidator = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const result = EmailValidationSchema.safeParse(req.body);
+  if (!result.success) {
+    return next(createError(httpStatus.BAD_REQUEST, fromZodError(result.error)));
+  }
+  next();
+};
+
+export const passwordValidator = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const result = PasswordValidationSchema.safeParse(req.body);
+  if (!result.success) {
+    return next(createError(httpStatus.BAD_REQUEST, fromZodError(result.error)));
+  }
+  next();
+};
+
+export const otpValidator = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const result = OTPValidationSchema.safeParse(req.body);
   if (!result.success) {
     return next(createError(httpStatus.BAD_REQUEST, fromZodError(result.error)));
   }

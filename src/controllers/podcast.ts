@@ -70,7 +70,7 @@ const create = async (req: Request, res: Response, next: NextFunction): Promise<
     await session.endSession();
   }
 
-  return res.status(httpStatus.CREATED).json({ message: "Success", data: podcast });
+  return res.status(httpStatus.CREATED).json({ success: true, message: "Success", data: podcast });
 };
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -97,7 +97,7 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
   );
   if (error) return next(error);
   if (!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not Found"));
-  return res.status(httpStatus.OK).json({ message: "Success", data: podcast });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcast });
 };
 
 const getAll = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -136,6 +136,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
   }
 
   return res.status(httpStatus.OK).json({
+    success: true,
     message: "Success",
     data: podcasts,
     pagination: {
@@ -182,7 +183,7 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
 
   [error, podcast] = await to(Podcast.findByIdAndUpdate(id, { $set: updateFields }, { new: true }));
   if (error) return next(error);
-  res.status(httpStatus.OK).json({ message: "Success", data: podcast });
+  res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcast });
 };
 
 const remove = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -224,7 +225,7 @@ const remove = async (req: Request, res: Response, next: NextFunction): Promise<
     return next(error);
   }
 
-  res.status(httpStatus.OK).json({ message: "Success" });
+  res.status(httpStatus.OK).json({ success: true, message: "Success" });
 };
 
 export const updateLikeCount = async (podcastId: string, value: number): Promise<number> => {
@@ -260,7 +261,7 @@ const fetchPodcastsSorted = async (
       .lean(),
   );
   if (error) return next(error);
-  return res.status(httpStatus.OK).json({ message: "Success", data: podcasts });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
 };
 
 export const mostLiked = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -288,13 +289,13 @@ const play = async (req: Request, res: Response, next: NextFunction): Promise<an
   await addPodcast(user.userId, podcast._id.toString());
   podcast.totalViews += 1;
   await podcast.save();
-  return res.status(httpStatus.OK).json({ message: "Success", data: podcast.audio });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcast.audio });
 };
 
 const PodcastController = {
   create,
-  getAll,
   get,
+  getAll,
   update,
   remove,
   mostLiked,

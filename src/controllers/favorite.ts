@@ -28,7 +28,7 @@ const ensureFavorite = async (userId: string, isPopulate: boolean): Promise<Favo
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const user = req.user;
   const favorite = await ensureFavorite(user.userId, true);
-  return res.status(httpStatus.OK).json({ message: "Success", data: favorite });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: favorite });
 };
 
 const toggle = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -48,7 +48,7 @@ const toggle = async (req: Request, res: Response, next: NextFunction): Promise<
     Favorite.findByIdAndUpdate(favorite._id, { [updateAction]: { podcasts: podcastId } }, { new: true }).lean(),
   );
   if (error) return next(error);
-  return res.status(httpStatus.OK).json({ message: "Success", data: favorite });
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: favorite });
 };
 
 const FavoriteController = {
