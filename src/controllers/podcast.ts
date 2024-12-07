@@ -13,6 +13,7 @@ import mongoose from "mongoose";
 import httpStatus from "http-status";
 import createError from "http-errors";
 import { addPodcast } from "@controllers/history";
+import { number } from "zod";
 
 type PodcastFiles = Express.Request & {
   files: { [fieldname: string]: Express.Multer.File[] };
@@ -241,43 +242,48 @@ export const updateCommentCount = async (podcastId: string): Promise<void> => {
   if (!podcast) console.error("Failed to update podcast comment count");
 };
 
-const fetchPodcastsSorted = async (
-  sortField: string,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<any> => {
-  const [error, podcasts] = await to(
-    Podcast.find()
-      .populate({
-        path: "creator",
-        select: "user",
-        populate: {
-          path: "user",
-          select: "name",
-        },
-      })
-      .sort({ [sortField]: -1 })
-      .lean(),
-  );
+export const fetchPodcastsSorted = async (sortField: string, limit?: number): Promise<any> => {
+  const query = Podcast.find()
+    .populate({
+      path: "creator",
+      select: "user",
+      populate: {
+        path: "user",
+        select: "name",
+      },
+    })
+    .sort({ [sortField]: -1 })
+    .lean();
+
+  // if (limit) query.limit(limit);
+
+  const [error, podcasts] = await to(query);
+  if (error) throw error;
+  return podcasts;
+};
+
+export const mostLiked = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const [error, podcasts] = await to(fetchPodcastsSorted("totalLikes"));
   if (error) return next(error);
   return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
 };
 
-export const mostLiked = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  return await fetchPodcastsSorted("totalLikes", req, res, next);
-};
-
 export const mostCommented = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  return await fetchPodcastsSorted("totalComments", req, res, next);
+  const [error, podcasts] = await to(fetchPodcastsSorted("totalComments"));
+  if (error) return next(error);
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
 };
 
 export const mostFavorited = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  return await fetchPodcastsSorted("totalFavorites", req, res, next);
+  const [error, podcasts] = await to(fetchPodcastsSorted("totalFavorites"));
+  if (error) return next(error);
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
 };
 
 export const mostViewed = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  return await fetchPodcastsSorted("totalViews", req, res, next);
+  const [error, podcasts] = await to(fetchPodcastsSorted("totalViews"));
+  if (error) return next(error);
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
 };
 
 const play = async (req: Request, res: Response, next: NextFunction): Promise<any> => {

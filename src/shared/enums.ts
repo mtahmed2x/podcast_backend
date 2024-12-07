@@ -10,6 +10,11 @@ export enum Subject {
   PLAYLIST = "playlist",
 }
 
+export enum Gender {
+  MALE = "male",
+  FEMALE = "female",
+}
+
 export enum SubscriptionStatus {
   ACTIVE = "active",
   PENDING = "pending",

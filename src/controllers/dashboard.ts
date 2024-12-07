@@ -90,12 +90,12 @@ const changePassword = async (req: Request, res: Response, next: NextFunction): 
   let [error, auth] = await to(Auth.findById(user.authId));
   if (error) return next(error);
   const isPasswordValid = await bcrypt.compare(password, auth!.password);
-  if (!isPasswordValid) return next(createError(400, "Incorrect Password"));
+  if (!isPasswordValid) return next(createError(401, "Incorrect Password"));
   if (newPassword !== confirmPassword) return next(createError(400, "Password's don't match"));
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   [error, auth] = await to(Auth.findByIdAndUpdate(user.authId, { $set: { password: hashedPassword } }, { new: true }));
   if (error) return next(error);
-  res.status(200).json({ message: "Success" });
+  res.status(200).json({ success: true, message: "Success", data: {} });
 };
 
 type Param = {

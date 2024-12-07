@@ -11,7 +11,7 @@ const add = async (req: Request, res: Response, next: NextFunction): Promise<any
 };
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const [error, about] = await to(About.find().limit(1));
+  const [error, about] = await to(About.findOne().limit(1));
   if (error) return next(error);
   if (!about) return next(createError(404, "About Us not found"));
   res.status(200).json({ message: "Success", data: about });

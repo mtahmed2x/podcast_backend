@@ -45,7 +45,6 @@ const hasAccess = (roles: Role[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const user = req.user;
     console.log(user);
-    console.log(roles);
     if (roles.includes(user.role as Role)) return next();
     return next(createError(403, "Access Denied."));
   };
@@ -71,7 +70,7 @@ const authorizeToken = (secret: string, errorMessage: string) => {
 
     if (data.isBlocked) return next(createError(403, "You are blocked"));
     req.user = data;
-
+    console.log(data);
     return next();
   };
 };

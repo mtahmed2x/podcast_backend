@@ -15,6 +15,7 @@ const ensureDirectoryExists = (directory: string) => {
 
 ensureDirectoryExists(audioDirectory);
 ensureDirectoryExists(coverDirectory);
+ensureDirectoryExists(avatarDirectory);
 
 const storage: StorageEngine = multer.diskStorage({
   destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
@@ -67,6 +68,7 @@ const upload = multer({
 const uploadMiddleware = upload.fields([
   { name: "audio", maxCount: 1 },
   { name: "cover", maxCount: 1 },
+  { name: "avatar", maxCount: 1 },
 ]);
 
 export const handleFileUpload = (req: Request, res: Response, next: NextFunction) => {

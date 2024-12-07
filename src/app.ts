@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { errorHandler } from "@middlewares/errorHandler";
 import { notFound } from "@middlewares/notfound";
+import HomeRouter from "@routers/home";
 import AuthRouter from "@routers/auth";
 import CategoryRouter from "@routers/category";
 import SubCategoryRouter from "@routers/subCategory";
@@ -20,7 +21,7 @@ import HistoryRouter from "@routers/history";
 import FavoriteRouter from "@routers/favorite";
 import LikeRouter from "@routers/like";
 import PlaylistRouter from "@routers/playlist";
-import PlaylistController from "@controllers/playlist";
+import PrivacyRouter from "@routers/privacy";
 /* Import End */
 
 const app = express();
@@ -35,6 +36,7 @@ app.use(
 /* Custom Router Start */
 app.use("/", WebHookRouter);
 app.use(express.json());
+app.use("/home", HomeRouter);
 app.use("/auth", AuthRouter);
 app.use("/category", CategoryRouter);
 app.use("/sub-category", SubCategoryRouter);
@@ -51,6 +53,7 @@ app.use("/favorite", FavoriteRouter);
 app.use("/history", HistoryRouter);
 app.use("/like", LikeRouter);
 app.use("/playlist", PlaylistRouter);
+app.use("/privacy", PrivacyRouter);
 /* Custom Router End */
 
 /* Default Routers */

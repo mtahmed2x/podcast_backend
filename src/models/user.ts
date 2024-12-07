@@ -1,5 +1,6 @@
 import { UserSchema } from "@schemas/user";
 import { Schema, model } from "mongoose";
+import { Gender } from "@shared/enums";
 
 const userSchema = new Schema<UserSchema>(
   {
@@ -13,18 +14,25 @@ const userSchema = new Schema<UserSchema>(
       required: true,
     },
     dateOfBirth: {
-      type: "String",
+      type: String,
       required: true,
     },
     gender: {
       type: String,
+      enum: Gender,
+      default: null,
     },
     contact: {
-      type: "String",
+      type: String,
+      default: null,
     },
     address: {
-      type: "String",
+      type: String,
       required: true,
+    },
+    avatar: {
+      type: String,
+      default: null,
     },
   },
   { timestamps: true },

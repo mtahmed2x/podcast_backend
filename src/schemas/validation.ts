@@ -14,12 +14,9 @@ export const FileSchema = z.object({
 export const AuthValidatorSchema = z
   .object({
     email: z.string().email(),
-    password: z
-      .string()
-      .min(8)
-      .max(30)
-      .refine((value) => /[a-z]/.test(value))
-      .refine((value) => /[A-Z]/.test(value)),
+    password: z.string().min(6).max(30),
+    // .refine((value) => /[a-z]/.test(value))
+    // .refine((value) => /[A-Z]/.test(value)),
     confirmPassword: z.string(),
     role: z.nativeEnum(Role).refine((value) => Object.values(Role).includes(value)),
     verificationOTP: z.string().optional(),
@@ -56,12 +53,9 @@ export const OTPValidationSchema = z.object({
 
 export const PasswordValidationSchema = z
   .object({
-    password: z
-      .string()
-      .min(8)
-      .max(30)
-      .refine((value) => /[a-z]/.test(value))
-      .refine((value) => /[A-Z]/.test(value)),
+    password: z.string().min(6).max(30),
+    // .refine((value) => /[a-z]/.test(value))
+    // .refine((value) => /[A-Z]/.test(value)),
     confirmPassword: z.string(),
   })
   .superRefine(({ confirmPassword, password }, ctx) => {

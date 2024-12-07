@@ -25,7 +25,18 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
   [error, auth] = await to(Auth.findOne({ email }));
 
   if (error) return next(error);
-  if (auth) return next(createError(httpStatus.BAD_REQUEST, "Email already exists"));
+  if (auth) {
+    const otp = generateOTP();
+    auth.verificationOTP = otp;
+    auth.verificationOTPExpire = new Date(Date.now() + 1 * 60 * 1000);
+    await auth.save();
+    await sendEmail(email, otp);
+    return res.status(httpStatus.OK).json({
+      success: true,
+      message: "Email already exists",
+      data: auth.isVerified,
+    });
+  }
 
   const verificationOTP = generateOTP();
   const verificationOTPExpire = new Date(Date.now() + 1 * 60 * 1000);
@@ -70,7 +81,7 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
     return res.status(201).json({
       success: true,
       message: "User registered successfully!",
-      data: {},
+      data: auth.isVerified,
     });
   } catch (error) {
     if (session.inTransaction()) {
