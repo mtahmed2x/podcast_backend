@@ -16,19 +16,24 @@ const subscriptionSchema = new Schema<SubscriptionSchema>(
     },
     stripeSubscriptionId: {
       type: String,
+      default: null,
     },
     stripeCustomerId: {
       type: String,
+      default: null,
     },
     status: {
       type: String,
       enum: SubscriptionStatus,
+      required: true,
     },
     startDate: {
       type: Date,
+      default: null,
     },
     endDate: {
       type: Date,
+      default: null,
     },
   },
   { timestamps: true },

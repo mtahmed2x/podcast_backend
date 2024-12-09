@@ -75,11 +75,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
   return res.status(200).json({ message: "Success", data: plans });
 };
 
-const update = async (
-  req: Request<Param, {}, Partial<PlanSchema>>,
-  res: Response,
-  next: NextFunction,
-): Promise<any> => {
+const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   let { name, description, unitAmount, interval } = req.body;
 

@@ -35,7 +35,10 @@ app.use(
 );
 /* Custom Router Start */
 app.use("/", WebHookRouter);
+
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
+
 app.use("/home", HomeRouter);
 app.use("/auth", AuthRouter);
 app.use("/category", CategoryRouter);

@@ -1,12 +1,11 @@
-import SubScriptionController from "@controllers/subscription";
+import SubscriptionController from "@controllers/subscription";
 import express from "express";
 import { authorize } from "@middlewares/authorization";
 
 const router = express.Router();
 
-router.post("/create", authorize, SubScriptionController.create);
-router.get("/", authorize, SubScriptionController.get);
-router.post("/upgrade/:id", authorize, SubScriptionController.upgrade);
-router.post("/cancel", SubScriptionController.cancel);
+router.post("/create/:id", authorize, SubscriptionController.create);
+router.get("/", authorize, SubscriptionController.get);
+router.post("/cancel", authorize, SubscriptionController.cancel);
 
 export default router;

@@ -37,10 +37,6 @@ const authSchema = new Schema<AuthSchema>(
       required: true,
       default: false,
     },
-    subscriptionType: {
-      type: String,
-      default: "free",
-    },
   },
   { timestamps: true },
 );

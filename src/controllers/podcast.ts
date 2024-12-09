@@ -133,7 +133,16 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
   );
   if (error) return next(error);
   if (!podcasts || podcasts.length === 0) {
-    return next(createError(httpStatus.NOT_FOUND, "No podcasts found"));
+    return res.status(httpStatus.OK).json({
+      success: true,
+      message: "No Podcast Found!",
+      data: podcasts,
+      pagination: {
+        page,
+        limit,
+        total: await Podcast.countDocuments(),
+      },
+    });
   }
 
   return res.status(httpStatus.OK).json({

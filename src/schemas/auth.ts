@@ -10,5 +10,4 @@ export type AuthSchema = Document & {
   verificationOTPExpire: Date | null;
   isVerified: boolean;
   isBlocked: boolean;
-  subscriptionType: string;
 };

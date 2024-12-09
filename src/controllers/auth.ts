@@ -74,6 +74,7 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
         user: user._id,
       });
     }
+
     await sendEmail(email, verificationOTP);
     await session.commitTransaction();
     await session.endSession();

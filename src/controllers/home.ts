@@ -21,7 +21,6 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
       .lean(),
   );
   if (error) return next(error);
-  console.log(creators);
   [error, newPodcasts] = await to(
     Podcast.find()
       .select("category cover audioDuration")
