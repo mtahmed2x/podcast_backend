@@ -4,12 +4,19 @@ import Category from "@models/category";
 import Creator from "@models/creator";
 import httpStatus from "http-status";
 import Podcast from "@models/podcast";
+import { CreatorSchema } from "@schemas/creator";
 
 const homeController = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   let error, categories, creators, newPodcasts, popularPodcasts;
   [error, categories] = await to(Category.find().select("title").limit(4).lean());
   if (error) return next(error);
-  console.log(categories);
+
+  const defaultCategoryImage = "uploads/default/default-catrgoty.png"; // Default image location
+  categories = categories.map((category: any) => ({
+    ...category,
+    image: defaultCategoryImage, // Add image field with default value
+  }));
+
   [error, creators] = await to(
     Creator.find()
       .select("user")
@@ -20,10 +27,17 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
       .limit(6)
       .lean(),
   );
+  const defaultAvatar = "uploads/default/default-avatar.png";
+  creators = creators.map((creator: any) => {
+    if (creator.user?.avatar == null) {
+      creator.user.avatar = defaultAvatar;
+    }
+    return creator;
+  });
   if (error) return next(error);
   [error, newPodcasts] = await to(
     Podcast.find()
-      .select("category cover audioDuration")
+      .select("title category cover audioDuration")
       .populate({
         path: "category",
         select: "title -_id",
@@ -34,10 +48,14 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
   );
 
   if (error) return next(error);
+  newPodcasts = newPodcasts.map((podcast: any) => ({
+    ...podcast,
+    audioDuration: (podcast.audioDuration / 60).toFixed(2),
+  }));
 
   [error, popularPodcasts] = await to(
     Podcast.find()
-      .select("category cover audioDuration")
+      .select("title category cover audioDuration")
       .populate({
         path: "category",
         select: "title -_id",
@@ -48,6 +66,11 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
   );
 
   if (error) return next(error);
+  popularPodcasts = popularPodcasts.map((podcast: any) => ({
+    ...podcast,
+    audioDuration: (podcast.audioDuration / 60).toFixed(2),
+  }));
+
   return res.status(httpStatus.OK).json({
     success: true,
     message: "Success",

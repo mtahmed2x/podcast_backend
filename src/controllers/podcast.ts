@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { getAudioMetadata, getImageMetadata } from "@utils/extractMetadata";
 import path from "path";
 import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
 
 import Podcast from "@models/podcast";
 import Category from "@models/category";
@@ -13,33 +14,56 @@ import mongoose from "mongoose";
 import httpStatus from "http-status";
 import createError from "http-errors";
 import { addPodcast } from "@controllers/history";
-import { number } from "zod";
 
 type PodcastFiles = Express.Request & {
   files: { [fieldname: string]: Express.Multer.File[] };
 };
 
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
+
 const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { categoryId, subCategoryId, title, description, location } = req.body;
-  const { audio, cover } = (req as PodcastFiles).files;
+  const { audio, cover } = (req as any).files; // Assuming `files` is populated by multer middleware
   const creatorId = req.user.creatorId;
 
   let error, category, subCategory;
 
+  // Validate Category
   [error, category] = await to(Category.findById(categoryId));
   if (error) return next(error);
   if (!category) return next(createError(httpStatus.NOT_FOUND, "Category Not Found"));
 
+  // Validate SubCategory
   [error, subCategory] = await to(SubCategory.findById(subCategoryId));
   if (error) return next(error);
   if (!subCategory) return next(createError(httpStatus.NOT_FOUND, "SubCategory Not Found"));
 
-  const audio_path = audio[0].path;
-  const cover_path = cover[0].path;
+  const audioLocalPath = audio[0].path; // Local path of the uploaded audio
+  const coverPath = cover[0].path;
 
-  const audioMetadata = await getAudioMetadata(audio_path);
-  const imageMetadata = await getImageMetadata(cover_path);
+  let audioCloudinaryUrl: string;
 
+  try {
+    // Upload audio to Cloudinary
+    const cloudinaryResponse = await cloudinary.uploader.upload(audioLocalPath, {
+      resource_type: "video", // Cloudinary treats audio as "video"
+      folder: "uploads/podcast/audio",
+    });
+    audioCloudinaryUrl = cloudinaryResponse.secure_url; // Secure URL for playback
+  } catch (uploadError) {
+    console.error("Cloudinary upload error:", uploadError);
+    return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "Audio upload to Cloudinary failed"));
+  }
+
+  // Extract metadata for audio and cover
+  const audioMetadata = await getAudioMetadata(audioCloudinaryUrl);
+  const imageMetadata = await getImageMetadata(coverPath);
+
+  // Start a transaction for database operations
   const session = await mongoose.startSession();
   session.startTransaction();
   let podcast;
@@ -48,30 +72,33 @@ const create = async (req: Request, res: Response, next: NextFunction): Promise<
       creator: creatorId,
       category: categoryId,
       subCategory: subCategoryId,
-      title: title,
-      description: description,
-      location: location,
-      cover: cover_path,
+      title,
+      description,
+      location,
+      cover: coverPath,
       coverFormat: imageMetadata.format,
       coverSize: imageMetadata.size,
-      audio: audio_path,
+      audio: audioCloudinaryUrl,
       audioFormat: audioMetadata.format,
       audioSize: audioMetadata.size,
       audioDuration: audioMetadata.duration,
     });
+
+    // Update Creator and SubCategory documents
     await Creator.findByIdAndUpdate(creatorId, { $push: { podcasts: podcast._id } });
     await SubCategory.findByIdAndUpdate(subCategoryId, { $push: { podcasts: podcast._id } });
+
+    await session.commitTransaction(); // Commit the transaction
   } catch (error) {
     if (session.inTransaction()) {
-      await session.abortTransaction();
-      await session.endSession();
+      await session.abortTransaction(); // Rollback transaction on error
     }
     return next(error);
   } finally {
-    await session.endSession();
+    session.endSession();
   }
 
-  return res.status(httpStatus.CREATED).json({ success: true, message: "Success", data: podcast });
+  return res.status(httpStatus.CREATED).json({ success: true, message: "Podcast created successfully", data: podcast });
 };
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
