@@ -37,7 +37,7 @@ const storage: StorageEngine = multer.diskStorage({
 
 const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   const allowedTypes: Record<string, RegExp> = {
-    audio: /mp3|wav|m4a|mpeg/,
+    audio: /mp3|wav|m4a|mpeg|audio\/mp4/,
     cover: /jpeg|jpg|png|gif/,
     avatar: /jpeg|jpg|png|gif/,
   };
@@ -45,6 +45,7 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallb
   const allowedType = allowedTypes[file.fieldname];
   if (allowedType) {
     const extname = allowedType.test(path.extname(file.originalname).toLowerCase());
+    console.log(file.mimetype);
     const mimetype = allowedType.test(file.mimetype);
 
     if (extname && mimetype) {
