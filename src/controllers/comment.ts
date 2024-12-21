@@ -19,39 +19,66 @@ const addComment = async (req: Request, res: Response, next: NextFunction): Prom
     if (error) return next(error);
     if (!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not Found"));
 
-    [error, comment] = await to(Comment.findOne({ user: user.userId, podcast: id }));
+    [error, comment] = await to(
+        Comment.create({
+            user: user.userId,
+            podcast: id,
+            text: text,
+        }),
+    );
     if (error) return next(error);
-    if (!comment) {
-        [error, comment] = await to(Comment.create({ user: user.userId, podcast: id, text: text }));
-        if (error) return next(error);
-    } else {
-        comment.text.push(text);
-        await comment.save();
-    }
+
     await updateCommentCount(id);
     await addNotification(id, user.userId, Subject.COMMENT);
 
-    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: comment });
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: "Success",
+        data: comment,
+    });
 };
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const { id } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
 
-    let error, podcast, comments;
+    let error, podcast, comments, totalComments;
     [error, podcast] = await to(Podcast.findById(id));
     if (error) return next(error);
     if (!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not Found"));
 
+    [error, totalComments] = await to(Comment.countDocuments({ podcast: id }));
+    if (error) return next(error);
+
     [error, comments] = await to(
-        Comment.find({ podcast: id }).populate({
-            path: "user",
-            select: "avatar name",
-        }),
+        Comment.find({ podcast: id })
+            .select("user text")
+            .populate({
+                path: "user",
+                select: "avatar name",
+            })
+            .skip(skip)
+            .limit(limit),
     );
     if (error) return next(error);
-    if (!comments) return res.status(httpStatus.OK).json({ success: true, message: "Success", data: [] });
+    if (!comments)
+        return res.status(httpStatus.OK).json({ success: true, message: "Success", data: [] });
 
-    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: comments });
+    const defaultAvatar = "uploads/default/default-avatar.png";
+    comments = comments.map((comment: any) => {
+        if (comment.user?.avatar == null) {
+            comment.user.avatar = defaultAvatar;
+        }
+        return comment;
+    });
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: "Success",
+        data: { comments, currentPage: page, limit },
+    });
 };
 
 const CommentController = {

@@ -23,6 +23,7 @@ import LikeRouter from "@routers/like";
 import CommentRouter from "@routers/comment";
 import PlaylistRouter from "@routers/playlist";
 import PrivacyRouter from "@routers/privacy";
+import SearchRouter from "@routers/search";
 /* Import End */
 
 const app = express();
@@ -60,6 +61,7 @@ app.use("/like", LikeRouter);
 app.use("/comment", CommentRouter);
 app.use("/playlist", PlaylistRouter);
 app.use("/privacy", PrivacyRouter);
+app.use("/search", SearchRouter);
 /* Custom Router End */
 
 /* Default Routers */

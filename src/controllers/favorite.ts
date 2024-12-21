@@ -15,7 +15,11 @@ const ensureFavorite = async (userId: string, isPopulate: boolean): Promise<Favo
             Favorite.findOne({ user: userId }).populate({
                 path: "podcasts",
                 select: "creator cover title",
-                populate: { path: "creator", select: "user -_id", populate: { path: "user", select: "name -_id" } },
+                populate: {
+                    path: "creator",
+                    select: "user -_id",
+                    populate: { path: "user", select: "name -_id" },
+                },
             }),
         );
     } else [error, favorite] = await to(Favorite.findOne({ user: userId }));
@@ -60,7 +64,10 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
             .lean(),
     );
     if (error) return next(error);
-    if (!favorite) return res.status(httpStatus.OK).json({ success: true, message: "No Podcast Found", data: {} });
+    if (!favorite)
+        return res
+            .status(httpStatus.OK)
+            .json({ success: true, message: "No Podcast Found", data: {} });
     return res.status(httpStatus.OK).json({ success: true, message: "Success", data: favorite });
 };
 
@@ -79,7 +86,11 @@ const toggle = async (req: Request, res: Response, next: NextFunction): Promise<
     const updateAction = isPodcastFavorite ? "$pull" : "$push";
     const value = isPodcastFavorite ? -1 : 1;
     [error, favorite] = await to(
-        Favorite.findByIdAndUpdate(favorite._id, { [updateAction]: { podcasts: podcastId } }, { new: true }).lean(),
+        Favorite.findByIdAndUpdate(
+            favorite._id,
+            { [updateAction]: { podcasts: podcastId } },
+            { new: true },
+        ).lean(),
     );
     if (error) return next(error);
     await updateFavoriteCount(podcastId, value);

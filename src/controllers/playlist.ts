@@ -3,221 +3,235 @@ import { NextFunction, Request, Response } from "express";
 import to from "await-to-ts";
 import httpStatus from "http-status";
 import createError from "http-errors";
+import { addNotification } from "./notification";
+import { Subject } from "@shared/enums";
+import Podcast from "@models/podcast";
+import { PlaylistSchema } from "@schemas/playlist";
 
-const create = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<any> => {
-  const user = req.user;
-  const { title, podcasts } = req.body;
-  const [error, playlist] = await to(
-    Playlist.create({
-      user: user.userId,
-      title: title,
-      podcasts: podcasts || [],
-    }),
-  );
-  if (error) return next(error);
-  res
-    .status(httpStatus.CREATED)
-    .json({ message: "Success", data: playlist });
+const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const user = req.user;
+    const { title, podcasts } = req.body;
+    let error, playlist;
+    [error, playlist] = await to(Playlist.findOne({ title: title }));
+    if (error) return next(error);
+    console.log(playlist);
+    if (playlist) return next(createError(httpStatus.CONFLICT, "Playlists already exists"));
+    if (!playlist) {
+        [error, playlist] = await to(
+            Playlist.create({
+                user: user.userId,
+                title: title,
+                podcasts: podcasts || [],
+            }),
+        );
+        if (error) return next(error);
+        for (const podcast of podcasts) {
+            await addNotification(podcast, user.userId, Subject.PLAYLIST);
+        }
+        return res
+            .status(httpStatus.CREATED)
+            .json({ success: true, message: "Success", data: playlist });
+    }
 };
 
-const get = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<any> => {
-  const id = req.params.id;
-  const userId = req.user.userId;
-  const [error, playlist] = await to(
-    Playlist.findOne({ user: userId, _id: id }).lean(),
-  );
-  if (error) return next(error);
-  if (!playlist)
-    return next(
-      createError(
-        httpStatus.NOT_FOUND,
-        "Playlist Not Found",
-      ),
+const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const id = req.params.id;
+    const userId = req.user.userId;
+    const [error, playlist] = await to(Playlist.findOne({ user: userId, _id: id }).lean());
+    if (error) return next(error);
+    if (!playlist) return next(createError(httpStatus.NOT_FOUND, "Playlist Not Found"));
+    res.status(httpStatus.OK).json({ success: true, message: "Success", data: playlist });
+};
+
+const getAll = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const userId = req.user.userId;
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    let error, playlists;
+    [error, playlists] = await to(
+        Playlist.find({ user: userId })
+            .populate({ path: "podcasts", select: "cover" })
+            .skip(skip)
+            .limit(Number(limit))
+            .lean(),
     );
-  res
-    .status(httpStatus.OK)
-    .json({ message: "Success", data: playlist });
+
+    if (error) return next(error);
+    if (!playlists || playlists.length === 0) {
+        return res.status(httpStatus.OK).json({
+            success: true,
+            message: "No Playlist Found",
+            data: {
+                currentPage: Number(page),
+                totalResults: 0,
+                limit: Number(limit),
+            },
+        });
+    }
+
+    playlists = playlists.map((playlist: any) => ({
+        _id: playlist._id,
+        title: playlist.title,
+        cover: playlist.podcasts[0].cover || null,
+        total: playlist.podcasts.length,
+    }));
+
+    res.status(httpStatus.OK).json({
+        message: "Success",
+        data: {
+            playlists,
+            currentPage: Number(page),
+            totalResults: playlists.length,
+            limit: Number(limit),
+        },
+    });
 };
 
-const getAll = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<any> => {
-  const userId = req.user.userId;
-  const { page = 1, limit = 10 } = req.query;
-  const skip = (Number(page) - 1) * Number(limit);
-
-  const [error, playlists] = await to(
-    Playlist.find({ user: userId })
-      .skip(skip)
-      .limit(Number(limit))
-      .lean(),
-  );
-
-  if (error) return next(error);
-  if (!playlists || playlists.length === 0) {
-    return next(
-      createError(
-        httpStatus.NOT_FOUND,
-        "Playlists Not Found",
-      ),
+const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const { id } = req.params;
+    const { title } = req.body;
+    const [error, playlist] = await to(
+        Playlist.findByIdAndUpdate(id, { $set: { title: title } }, { new: true }).lean(),
     );
-  }
-
-  const [countError, totalPlaylists] = await to(
-    Playlist.countDocuments({ user: userId }),
-  );
-  if (countError) return next(countError);
-
-  res.status(httpStatus.OK).json({
-    message: "Success",
-    data: playlists,
-    pagination: {
-      currentPage: Number(page),
-      totalPages: Math.ceil(totalPlaylists / Number(limit)),
-      totalResults: totalPlaylists,
-      limit: Number(limit),
-    },
-  });
+    if (error) return next(error);
+    if (!playlist) return next(createError(httpStatus.NOT_FOUND, "Playlist Not Found"));
+    res.status(httpStatus.OK).json({ success: true, message: "Success", data: playlist });
 };
 
-const update = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<any> => {
-  const { id } = req.params;
-  const { title } = req.body;
-  const [error, playlist] = await to(
-    Playlist.findByIdAndUpdate(
-      id,
-      { $set: { title: title } },
-      { new: true },
-    ).lean(),
-  );
-  if (error) return next(error);
-  if (!playlist)
-    return next(
-      createError(
-        httpStatus.NOT_FOUND,
-        "Playlist Not Found",
-      ),
+const remove = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const { id } = req.params;
+    const [error, playlist] = await to(Playlist.findByIdAndDelete(id));
+    if (error) return next(error);
+    if (!playlist) return next(createError(httpStatus.NOT_FOUND, "Playlist Not Found"));
+    res.status(httpStatus.OK).json({ success: true, message: "Success", data: {} });
+};
+
+const addPodcast = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const user = req.user;
+    const id = req.params.id;
+    const { podcasts } = req.body;
+
+    if (!Array.isArray(podcasts) || podcasts.length === 0) {
+        return next(createError(httpStatus.BAD_REQUEST, "Invalid podcasts list"));
+    }
+
+    let error, playlist;
+    [error, playlist] = await to(Playlist.findOne({ _id: id, user: user.userId }));
+    if (error) return next(error);
+    if (!playlist) return next(createError(httpStatus.NOT_FOUND, "Playlist Not Found"));
+
+    // Ensure podcasts are unique within the playlist
+    const existingPodcastIds = new Set(playlist.podcasts.map((p: any) => p.toString()));
+    const newPodcasts = podcasts.filter((p: string) => !existingPodcastIds.has(p));
+
+    // Add unique podcasts to the playlist
+    playlist.podcasts.push(...newPodcasts);
+
+    [error] = await to(playlist.save());
+    if (error) return next(error);
+
+    // Notify for new podcasts
+    for (const podcast of newPodcasts) {
+        await addNotification(podcast, user.userId, Subject.PLAYLIST);
+    }
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: "Success",
+        data: playlist,
+    });
+};
+
+const getPodcast = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    if (page <= 0 || limit <= 0) {
+        return next(createError(httpStatus.BAD_REQUEST, "Invalid pagination parameters"));
+    }
+
+    const id = req.params.id;
+    const userId = req.user.userId;
+
+    let error, playlist;
+    [error, playlist] = await to(
+        Playlist.findOne({ user: userId, _id: id })
+            .populate({
+                path: "podcasts",
+                select: "creator category cover title audioDuration",
+                populate: [
+                    {
+                        path: "creator",
+                        select: "user -_id",
+                        populate: {
+                            path: "user",
+                            select: "name -_id",
+                        },
+                    },
+                    {
+                        path: "category",
+                        select: "title -_id",
+                    },
+                ],
+            })
+            .lean(),
     );
-  res
-    .status(httpStatus.OK)
-    .json({ message: "Success", data: playlist });
+
+    if (error) return next(error);
+    if (!playlist)
+        return res
+            .status(httpStatus.OK)
+            .json({ success: true, message: "Playlist not found", data: [] });
+
+    // Apply pagination to the podcasts array
+    const totalPodcasts = playlist.podcasts.length;
+    const paginatedPodcasts = playlist.podcasts.slice((page - 1) * limit, page * limit);
+
+    // Convert audioDuration to minutes
+    const formattedPodcasts = paginatedPodcasts.map((podcast: any) => ({
+        ...podcast,
+        audioDuration: (podcast.audioDuration / 60).toFixed(2) + " min",
+    }));
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: "Success",
+        data: {
+            podcasts: formattedPodcasts,
+            currentPage: page,
+            totalPages: Math.ceil(totalPodcasts / limit),
+            totalPodcasts,
+        },
+    });
 };
 
-const remove = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<any> => {
-  const { id } = req.params;
-  const [error, playlist] = await to(
-    Playlist.findByIdAndDelete(id),
-  );
-  if (error) return next(error);
-  if (!playlist)
-    return next(
-      createError(
-        httpStatus.NOT_FOUND,
-        "Playlist Not Found",
-      ),
+const removePodcast = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const user = req.user;
+    const id = req.params.id;
+    const { podcastId } = req.body;
+    let error, playlist;
+    [error, playlist] = await to(Playlist.findOne({ _id: id, user: user.userId }));
+    if (error) return next(error);
+    if (!playlist) return next(createError(httpStatus.NOT_FOUND, "Playlist Not Found"));
+
+    [error, playlist] = await to(
+        Playlist.findByIdAndUpdate(id, { $pull: { podcasts: podcastId } }, { new: true }),
     );
-  res.status(httpStatus.OK).json({ message: "Success" });
+    if (error) return next(error);
+
+    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: playlist });
 };
-
-// const addPodcast = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-//   const user = req.user;
-//   const { playlistId, podcastId } = req.body;
-//   let error, playlist, podcast;
-//   [error, playlist] = await to(Playlist.findOne({ _id: playlistId, user: user.userId }));
-//   if (error) return next(error);
-//   if (!playlist) return next(createError(httpStatus.NOT_FOUND, "Playlist Not Found"));
-//
-//   [error, podcast] = await to(Podcast.findById(podcastId));
-//   if (error) return next(error);
-//   if (!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not Found"));
-//
-//   playlist.podcasts.push(podcastId);
-//   [error, playlist] = await to(playlist.save());
-//   if (error) return next(error);
-//
-//   await addNotification(podcastId, user.userId, Subject.PLAYLIST);
-//   return res.status(httpStatus.OK).json({ success:true, message: "Success", playlist });
-// };
-
-const getPodcast = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<any> => {
-  const { id } = req.params;
-  const user = req.user;
-  const [error, playlist] = await to(
-    Playlist.findOne({
-      _id: id,
-      user: user.userId,
-    }).populate({
-      path: "podcasts",
-      select: "creator cover title",
-      populate: {
-        path: "creator",
-        select: "user -_id",
-        populate: { path: "user", select: "name -_id" },
-      },
-    }),
-  );
-  if (error) return next(error);
-  if (!playlist)
-    return next(
-      createError(
-        httpStatus.NOT_FOUND,
-        "Playlist Not Found",
-      ),
-    );
-  return res
-    .status(httpStatus.OK)
-    .json({ message: "Success", data: playlist.podcasts });
-};
-
-// const removePodcast = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-//   const user = req.user;
-//   const { playlistId, podcastId } = req.body;
-//   let error, playlist, podcast;
-//   [error, playlist] = await to(Playlist.findOne({ _id: playlistId, user: user.userId }));
-//   if (error) return next(error);
-//   if (!playlist) return next(createError(httpStatus.NOT_FOUND, "Playlist Not Found"));
-//
-//   [error, podcast] = await to(Podcast.findById(podcastId));
-//   if (error) return next(error);
-//   if (!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not Found"));
-//
-//   [error, playlist] = await to(
-//     Playlist.findByIdAndUpdate(playlistId, { $pull: { podcasts: podcastId } }, { new: true }),
-//   );
-//   if (error) return next(error);
-//
-//   return res.status(httpStatus.OK).json({ success:true, message: "Success", data: playlist });
-// };
 
 const PlaylistController = {
-  create,
-  get,
-  getAll,
-  update,
-  remove,
-  getPodcast,
+    create,
+    get,
+    getAll,
+    update,
+    remove,
+    getPodcast,
+    addPodcast,
+    removePodcast,
 };
 
 export default PlaylistController;
