@@ -58,7 +58,7 @@ export const initSocket = (server: any): void => {
       const comment = await addNewComment(data.podcastId, data.text, user.userId);
       console.log(comment);
       await updateCommentCount(data.podcastId);
-      io!.emit("commentUpdate", { user: user.userId, comment: comment.text });
+      // io!.emit("commentUpdate", { user: user.userId, comment: comment.text });
       await addNotification(data.podcastId, user.userId, Subject.COMMENT);
     });
 

@@ -20,6 +20,7 @@ import WebHookRouter from "@routers/stripe-webhook";
 import HistoryRouter from "@routers/history";
 import FavoriteRouter from "@routers/favorite";
 import LikeRouter from "@routers/like";
+import CommentRouter from "@routers/comment";
 import PlaylistRouter from "@routers/playlist";
 import PrivacyRouter from "@routers/privacy";
 /* Import End */
@@ -27,11 +28,11 @@ import PrivacyRouter from "@routers/privacy";
 const app = express();
 
 app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  }),
+    cors({
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true,
+    }),
 );
 /* Custom Router Start */
 app.use("/", WebHookRouter);
@@ -42,6 +43,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/home", HomeRouter);
 app.use("/auth", AuthRouter);
 app.use("/category", CategoryRouter);
+app.use("/creator", CreatorRouter);
 app.use("/sub-category", SubCategoryRouter);
 app.use("/podcast", PodcastRouter);
 app.use("/plan", PlanRouter);
@@ -55,6 +57,7 @@ app.use("/about", AboutRouter);
 app.use("/favorite", FavoriteRouter);
 app.use("/history", HistoryRouter);
 app.use("/like", LikeRouter);
+app.use("/comment", CommentRouter);
 app.use("/playlist", PlaylistRouter);
 app.use("/privacy", PrivacyRouter);
 /* Custom Router End */

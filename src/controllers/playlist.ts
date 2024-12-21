@@ -154,7 +154,7 @@ const remove = async (
 //   if (error) return next(error);
 //
 //   await addNotification(podcastId, user.userId, Subject.PLAYLIST);
-//   return res.status(httpStatus.OK).json({ message: "Success", playlist });
+//   return res.status(httpStatus.OK).json({ success:true, message: "Success", playlist });
 // };
 
 const getPodcast = async (
@@ -208,7 +208,7 @@ const getPodcast = async (
 //   );
 //   if (error) return next(error);
 //
-//   return res.status(httpStatus.OK).json({ message: "Success", data: playlist });
+//   return res.status(httpStatus.OK).json({ success:true, message: "Success", data: playlist });
 // };
 
 const PlaylistController = {

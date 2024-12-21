@@ -11,6 +11,6 @@ router.get("/", PodcastController.getAll);
 router.get("/:id", ParamValidator, PodcastController.get);
 router.put("/update/:id", authorize, ParamValidator, handleFileUpload, PodcastController.update);
 router.delete("/delete/:id", ParamValidator, PodcastController.remove);
-router.post("/play/:id", PodcastController.play);
+router.post("/play/:id", authorize, PodcastController.play);
 
 export default router;

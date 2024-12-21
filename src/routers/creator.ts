@@ -4,6 +4,6 @@ import { authorize, isCreator } from "@middlewares/authorization";
 
 const router = express.Router();
 
-router.post("/delete", authorize, isCreator, CreatorController.remove);
+router.get("/all-podcasts", authorize, isCreator, CreatorController.getAllPodcasts);
 
 export default router;
