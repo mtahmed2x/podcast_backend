@@ -42,7 +42,7 @@ const getAllPodcasts = async (req: Request, res: Response, next: NextFunction): 
     }
     podcasts = podcasts.map((podcast: any) => ({
         ...podcast,
-        audioDuration: (podcast.audioDuration / 60).toFixed(2),
+        audioDuration: (podcast.audioDuration / 60).toFixed(2) + " min",
     }));
     return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
 };

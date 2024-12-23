@@ -6,11 +6,19 @@ import { createPodcastValidator, ParamValidator } from "@middlewares/validation"
 
 const router = express.Router();
 
-router.post("/create", authorize, isCreator, handleFileUpload, createPodcastValidator, PodcastController.create);
+router.post(
+    "/create",
+    authorize,
+    isCreator,
+    handleFileUpload,
+    createPodcastValidator,
+    PodcastController.create,
+);
 router.get("/", PodcastController.getAll);
 router.get("/:id", ParamValidator, PodcastController.get);
 router.put("/update/:id", authorize, ParamValidator, handleFileUpload, PodcastController.update);
 router.delete("/delete/:id", ParamValidator, PodcastController.remove);
 router.post("/play/:id", authorize, PodcastController.play);
+router.post("/play-next/:id", authorize, PodcastController.playNext);
 
 export default router;

@@ -4,13 +4,7 @@ import { Router } from "express";
 const router = Router();
 
 router.get("/podcasts", searchController.searchPodcasts);
-router.get(
-  "/categories",
-  searchController.searchCategories,
-);
-router.get(
-  "/subcategories",
-  searchController.searchSubCategories,
-);
+router.get("/categories", searchController.searchCategories);
+router.get("/subcategories/:id", searchController.searchSubCategories);
 
 export default router;

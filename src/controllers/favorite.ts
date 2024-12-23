@@ -32,14 +32,17 @@ const ensureFavorite = async (userId: string, isPopulate: boolean): Promise<Favo
 };
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const page = Math.max(Number(req.query.page) || 1, 1); // Ensure page is at least 1
+    const limit = Math.max(Number(req.query.limit) || 10, 1); // Ensure limit is at least 1
 
     if (page <= 0 || limit <= 0) {
         return next(createError(httpStatus.BAD_REQUEST, "Invalid pagination parameters"));
     }
+
     const user = req.user;
-    const [error, favorite] = await to(
+
+    let error, favorite;
+    [error, favorite] = await to(
         Favorite.findOne({ user: user.userId })
             .populate({
                 path: "podcasts",
@@ -59,16 +62,34 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
                     },
                 ],
             })
-            .skip((page - 1) * limit)
-            .limit(limit)
             .lean(),
     );
+
     if (error) return next(error);
-    if (!favorite)
+    if (!favorite || !favorite.podcasts || favorite.podcasts.length === 0) {
         return res
             .status(httpStatus.OK)
-            .json({ success: true, message: "No Podcast Found", data: {} });
-    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: favorite });
+            .json({ success: true, message: "No Podcast Found", data: [] });
+    }
+
+    const totalPodcasts = favorite.podcasts.length;
+    const paginatedPodcasts = favorite.podcasts.slice((page - 1) * limit, page * limit);
+
+    const formattedPodcasts = paginatedPodcasts.map((podcast: any) => ({
+        ...podcast,
+        audioDuration: (podcast.audioDuration / 60).toFixed(2) + " min",
+    }));
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: "Success",
+        data: {
+            podcasts: formattedPodcasts,
+            currentPage: page,
+            totalPages: Math.ceil(totalPodcasts / limit),
+            totalPodcasts,
+        },
+    });
 };
 
 const toggle = async (req: Request, res: Response, next: NextFunction): Promise<any> => {

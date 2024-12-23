@@ -39,37 +39,61 @@ export const searchCategories = async (
     });
 };
 
-export const searchSubCategories = async (
+const searchSubCategories = async (
     req: Request,
     res: Response,
     next: NextFunction,
 ): Promise<any> => {
-    const { query } = req.query;
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
+    const categoryId = req.params.id;
+    const query = (req.query.query as string) || "all";
+    const defaultCategoryImage = "uploads/default/default-catrgoty.png";
 
-    if (!query || typeof query !== "string") {
-        return next(createError(httpStatus.BAD_REQUEST, "Invalid query parameter"));
+    try {
+        const category = await Category.findById(categoryId)
+            .populate({
+                path: "subCategories",
+                select: "title subCategoryImage",
+            })
+            .lean();
+
+        if (!category) {
+            return res.status(httpStatus.NOT_FOUND).json({
+                success: false,
+                message: "Category Not Found",
+            });
+        }
+
+        let filteredSubCategories;
+        if (query === "all") {
+            filteredSubCategories = category.subCategories;
+        } else {
+            const regex = new RegExp(query, "i"); // Case-insensitive regex
+            filteredSubCategories = category.subCategories.filter((subCategory: any) =>
+                regex.test(subCategory.title),
+            );
+        }
+
+        const formattedSubCategories = filteredSubCategories.map((subCategory: any) => ({
+            _id: subCategory._id,
+            title: subCategory.title,
+            subCategoryImage: subCategory.subCategoryImage || defaultCategoryImage,
+        }));
+
+        return res.status(httpStatus.OK).json({
+            success: true,
+            message: "Success",
+            data: {
+                category: {
+                    _id: category._id,
+                    title: category.title,
+                    categoryImage: category.categoryImage || defaultCategoryImage,
+                },
+                subCategories: formattedSubCategories,
+            },
+        });
+    } catch (error) {
+        return next(error);
     }
-
-    const regex = new RegExp(query, "i");
-
-    const [error, subCategories] = await to(
-        SubCategory.find({ title: regex }).skip(skip).limit(Number(limit)),
-    );
-
-    if (error) return next(error);
-
-    return res.status(httpStatus.OK).json({
-        success: true,
-        message: "Success",
-        data: {
-            subCategories,
-            totalResults: subCategories.length,
-            page: Number(page),
-            limit: Number(limit),
-        },
-    });
 };
 
 export const searchPodcasts = async (
@@ -81,11 +105,16 @@ export const searchPodcasts = async (
     const { page = 1, limit = 10 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
+    // Validate query parameter
     if (!query || typeof query !== "string") {
         return next(createError(httpStatus.BAD_REQUEST, "Invalid query parameter"));
     }
 
-    const regex = new RegExp(query, "i");
+    // Check if query is "all"
+    const isShowAll = query.trim().toLowerCase() === "all";
+
+    // Build regex for non-"all" queries
+    const regex = isShowAll ? null : new RegExp(query, "i");
 
     const [error, podcasts] = await to(
         Podcast.aggregate([
@@ -125,18 +154,23 @@ export const searchPodcasts = async (
                 },
             },
             { $unwind: "$creator.user" },
-            {
-                $match: {
-                    $or: [
-                        { title: regex },
-                        { description: regex },
-                        { location: regex },
-                        { "creator.user.name": regex },
-                        { "category.title": regex },
-                        { "subCategory.title": regex },
-                    ],
-                },
-            },
+            // Conditionally add $match stage based on query
+            ...(isShowAll
+                ? []
+                : [
+                      {
+                          $match: {
+                              $or: [
+                                  { title: regex },
+                                  { description: regex },
+                                  { location: regex },
+                                  { "creator.user.name": regex },
+                                  { "category.title": regex },
+                                  { "subCategory.title": regex },
+                              ],
+                          },
+                      },
+                  ]),
             {
                 $project: {
                     title: 1,
@@ -145,7 +179,12 @@ export const searchPodcasts = async (
                     audio: 1,
                     totalLikes: 1,
                     totalViews: 1,
-                    audioDuration: { $round: [{ $divide: ["$audioDuration", 60] }, 2] }, // Convert to minutes and round to 2 decimal places
+                    audioDuration: {
+                        $concat: [
+                            { $toString: { $round: [{ $divide: ["$audioDuration", 60] }, 2] } },
+                            " min",
+                        ],
+                    },
                     "creator.user.name": 1,
                     "creator.user.avatar": 1,
                     "category.title": 1,

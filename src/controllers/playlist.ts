@@ -48,8 +48,10 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
     const { page = 1, limit = 10 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
-    let error, playlists;
-    [error, playlists] = await to(
+    const [countError, totalPlaylists] = await to(Playlist.countDocuments({ user: userId }));
+    if (countError) return next(countError);
+
+    const [fetchError, playlists] = await to(
         Playlist.find({ user: userId })
             .populate({ path: "podcasts", select: "cover" })
             .skip(skip)
@@ -57,33 +59,40 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
             .lean(),
     );
 
-    if (error) return next(error);
+    if (fetchError) return next(fetchError);
+
     if (!playlists || playlists.length === 0) {
         return res.status(httpStatus.OK).json({
             success: true,
             message: "No Playlist Found",
-            data: {
+            data: { playlists: [] },
+            pagination: {
                 currentPage: Number(page),
-                totalResults: 0,
+                totalPages: Math.ceil(totalPlaylists / Number(limit)),
                 limit: Number(limit),
+                totalResults: totalPlaylists,
             },
         });
     }
 
-    playlists = playlists.map((playlist: any) => ({
+    const processedPlaylists = playlists.map((playlist: any) => ({
         _id: playlist._id,
         title: playlist.title,
-        cover: playlist.podcasts[0].cover || null,
+        cover: playlist.podcasts[0]?.cover || null,
         total: playlist.podcasts.length,
     }));
 
     res.status(httpStatus.OK).json({
+        success: true,
         message: "Success",
         data: {
-            playlists,
+            playlists: processedPlaylists,
+        },
+        pagination: {
             currentPage: Number(page),
-            totalResults: playlists.length,
+            totalPages: Math.ceil(totalPlaylists / Number(limit)),
             limit: Number(limit),
+            totalResults: totalPlaylists,
         },
     });
 };
@@ -184,11 +193,15 @@ const getPodcast = async (req: Request, res: Response, next: NextFunction): Prom
             .status(httpStatus.OK)
             .json({ success: true, message: "Playlist not found", data: [] });
 
-    // Apply pagination to the podcasts array
+    if (!playlist.podcasts || playlist.podcasts.length === 0) {
+        return res
+            .status(httpStatus.OK)
+            .json({ success: true, message: "No Podcasts Found!", data: [] });
+    }
+
     const totalPodcasts = playlist.podcasts.length;
     const paginatedPodcasts = playlist.podcasts.slice((page - 1) * limit, page * limit);
 
-    // Convert audioDuration to minutes
     const formattedPodcasts = paginatedPodcasts.map((podcast: any) => ({
         ...podcast,
         audioDuration: (podcast.audioDuration / 60).toFixed(2) + " min",
