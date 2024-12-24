@@ -14,11 +14,14 @@ router.post(
     createPodcastValidator,
     PodcastController.create,
 );
+router.get("/popular", PodcastController.popularPodcasts);
+router.get("/latest", PodcastController.latestPodcasts);
 router.get("/", PodcastController.getAll);
 router.get("/:id", ParamValidator, PodcastController.get);
 router.put("/update/:id", authorize, ParamValidator, handleFileUpload, PodcastController.update);
 router.delete("/delete/:id", ParamValidator, PodcastController.remove);
 router.post("/play/:id", authorize, PodcastController.play);
 router.post("/play-next/:id", authorize, PodcastController.playNext);
+router.post("/report/:id", authorize, PodcastController.reportPodcast);
 
 export default router;

@@ -65,11 +65,24 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const id = req.params.id;
     const title = req.body.title;
+    const files = (req as any).files;
+
+    let categoryImagePath;
+    if (files && files.categoryImage) {
+        categoryImagePath = files.categoryImage[0].path;
+    }
+    console.log(categoryImagePath);
+
+    const updateData: any = {};
+    if (title) updateData.title = title;
+    if (categoryImagePath) updateData.categoryImage = categoryImagePath;
+
     const [error, category] = await to(
-        Category.findOneAndUpdate({ _id: id }, { $set: { title: title } }, { new: true }),
+        Category.findOneAndUpdate({ _id: id }, { $set: updateData }, { new: true }),
     );
     if (error) return next(error);
     if (!category) return next(createError(httpStatus.NOT_FOUND, "Category Not Found"));
+
     return res.status(httpStatus.OK).json({ success: true, message: "Success", data: category });
 };
 

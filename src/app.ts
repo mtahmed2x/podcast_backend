@@ -24,6 +24,8 @@ import CommentRouter from "@routers/comment";
 import PlaylistRouter from "@routers/playlist";
 import PrivacyRouter from "@routers/privacy";
 import SearchRouter from "@routers/search";
+import SupportRouter from "@routers/support";
+import ReportRouter from "@routers/report";
 /* Import End */
 
 const app = express();
@@ -62,6 +64,9 @@ app.use("/comment", CommentRouter);
 app.use("/playlist", PlaylistRouter);
 app.use("/privacy", PrivacyRouter);
 app.use("/search", SearchRouter);
+app.use("/support", SupportRouter);
+app.use("/report", ReportRouter);
+
 /* Custom Router End */
 
 /* Default Routers */

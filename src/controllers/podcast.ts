@@ -18,6 +18,8 @@ import Like from "@models/like";
 import Favorite from "@models/favorite";
 import { PodcastSchema } from "@schemas/podcast";
 
+import Report from "@models/report";
+
 type PodcastFiles = Express.Request & {
     files: { [fieldname: string]: Express.Multer.File[] };
 };
@@ -132,7 +134,7 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
 const getAll = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const page = Math.max(Number(req.query.page) || 1, 1);
     const limit = Math.max(Number(req.query.limit) || 10, 1);
-    1;
+
     const skip = (page - 1) * limit;
 
     if (page <= 0 || limit <= 0) {
@@ -327,18 +329,12 @@ export const fetchPodcastsSorted = async (sortField: string, limit?: number): Pr
                 select: "name",
             },
         })
-        .sort({ [sortField]: -1 })
+        .sort({ [sortField]: 1 })
         .lean();
 
     const [error, podcasts] = await to(query);
     if (error) throw error;
     return podcasts;
-};
-
-export const mostLiked = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-    const [error, podcasts] = await to(fetchPodcastsSorted("totalLikes"));
-    if (error) return next(error);
-    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
 };
 
 export const mostCommented = async (
@@ -364,6 +360,94 @@ export const mostFavorited = async (
 export const mostViewed = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const [error, podcasts] = await to(fetchPodcastsSorted("totalViews"));
     if (error) return next(error);
+    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
+};
+
+export const mostLiked = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const [error, podcasts] = await to(fetchPodcastsSorted("totalLikes"));
+    if (error) return next(error);
+    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
+};
+
+const popularPodcasts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    if (page <= 0 || limit <= 0) {
+        return next(createError(httpStatus.BAD_REQUEST, "Invalid pagination parameters"));
+    }
+    let error, podcasts;
+    [error, podcasts] = await to(
+        Podcast.find()
+            .select("title category cover audioDuration totalLikes")
+            .populate({
+                path: "category",
+                select: "title -_id",
+            })
+            .sort({ totalLikes: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean(),
+    );
+    if (error) return next(error);
+
+    if (!podcasts || podcasts.length === 0) {
+        return res.status(httpStatus.OK).json({
+            success: true,
+            message: "No Podcast Found!",
+            data: podcasts,
+            pagination: {
+                page,
+                limit,
+                total: await Podcast.countDocuments(),
+            },
+        });
+    }
+    podcasts = podcasts.map((podcast: any) => ({
+        ...podcast,
+        audioDuration: (podcast.audioDuration / 60).toFixed(2) + " min",
+    }));
+    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
+};
+
+const latestPodcasts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    if (page <= 0 || limit <= 0) {
+        return next(createError(httpStatus.BAD_REQUEST, "Invalid pagination parameters"));
+    }
+    let error, podcasts;
+    [error, podcasts] = await to(
+        Podcast.find()
+            .select("title category cover audioDuration createdAt updatedAt")
+            .populate({
+                path: "category",
+                select: "title -_id",
+            })
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean(),
+    );
+    if (error) return next(error);
+
+    if (!podcasts || podcasts.length === 0) {
+        return res.status(httpStatus.OK).json({
+            success: true,
+            message: "No Podcast Found!",
+            data: podcasts,
+            pagination: {
+                page,
+                limit,
+                total: await Podcast.countDocuments(),
+            },
+        });
+    }
+    podcasts = podcasts.map((podcast: any) => ({
+        ...podcast,
+        audioDuration: (podcast.audioDuration / 60).toFixed(2) + " min",
+    }));
     return res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcasts });
 };
 
@@ -427,18 +511,17 @@ const play = async (req: Request, res: Response, next: NextFunction): Promise<an
 
 const playNext = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const user = req.user;
-    const id = req.params.id; // ID of the podcast to exclude
+    const id = req.params.id;
 
-    // Find a random podcast excluding the current one
     let error, randomPodcast;
     [error, randomPodcast] = await to(
         Podcast.aggregate([
             {
                 $match: {
-                    _id: { $ne: new mongoose.Types.ObjectId(id) }, // Exclude the current podcast ID
+                    _id: { $ne: new mongoose.Types.ObjectId(id) },
                 },
             },
-            { $sample: { size: 1 } }, // Randomly select one podcast
+            { $sample: { size: 1 } },
         ]),
     );
     if (error) return next(error);
@@ -505,6 +588,44 @@ const playNext = async (req: Request, res: Response, next: NextFunction): Promis
     });
 };
 
+const reportPodcast = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    const { podcastId, description } = req.body;
+    const userId = req.user.userId;
+    let error, podcast, creator: any, report;
+    [error, podcast] = await to(Podcast.findById(podcastId));
+    if (error) return next(error);
+    if (!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not Found"));
+
+    [error, creator] = await to(
+        Creator.findById(podcast.creator).populate({ path: "user", select: "name" }),
+    );
+    if (error) return next(error);
+    if (!creator) return next(createError(httpStatus.NOT_FOUND, "Creator Not Found"));
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        report = await Report.create({
+            podcastId,
+            podcastName: podcast.title,
+            podcastCover: podcast.cover,
+            cretorName: creator.user?.name,
+            userName: userId,
+            date: new Date(),
+            description,
+        });
+        await session.commitTransaction();
+    } catch (error) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        return next(error);
+    } finally {
+        session.endSession();
+    }
+    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: report });
+};
+
 const PodcastController = {
     create,
     get,
@@ -517,6 +638,9 @@ const PodcastController = {
     mostViewed,
     play,
     playNext,
+    latestPodcasts,
+    popularPodcasts,
+    reportPodcast,
 };
 
 export default PodcastController;

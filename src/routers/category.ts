@@ -9,7 +9,14 @@ const CategoryRouter = express.Router();
 CategoryRouter.post("/create", authorize, isAdmin, handleFileUpload, CategoryController.create);
 CategoryRouter.get("/", authorize, CategoryController.getAll);
 CategoryRouter.get("/:id", authorize, ParamValidator, CategoryController.get);
-CategoryRouter.put("/update/:id", authorize, isAdmin, ParamValidator, CategoryController.update);
+CategoryRouter.put(
+    "/update/:id",
+    authorize,
+    isAdmin,
+    ParamValidator,
+    handleFileUpload,
+    CategoryController.update,
+);
 CategoryRouter.delete("/delete/:id", authorize, isAdmin, ParamValidator, CategoryController.remove);
 CategoryRouter.get(
     "/:id/sub-categories",

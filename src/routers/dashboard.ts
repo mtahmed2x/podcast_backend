@@ -15,5 +15,7 @@ router.post("/unblock/:id", authorize, isAdmin, DashboardController.unblock);
 router.get("/income", authorize, isAdmin, DashboardController.incomeByMonth);
 router.get("/total-subscriber", authorize, isAdmin, DashboardController.totalSubscriber);
 router.get("/subscriber", authorize, isAdmin, DashboardController.subscribersByMonth);
+router.get("/search-creators", authorize, isAdmin, DashboardController.searchCreatorsByName);
+router.get("/search-users", authorize, isAdmin, DashboardController.searchUsersByName);
 
 export default router;

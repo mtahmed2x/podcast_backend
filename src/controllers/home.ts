@@ -4,10 +4,11 @@ import Category from "@models/category";
 import Creator from "@models/creator";
 import httpStatus from "http-status";
 import Podcast from "@models/podcast";
-import { CreatorSchema } from "@schemas/creator";
 
 const homeController = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     let error, categories, creators, newPodcasts, popularPodcasts;
+    const { country } = req.body;
+
     [error, categories] = await to(Category.find().select("title").limit(4).lean());
     if (error) return next(error);
 
@@ -27,19 +28,23 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
             .limit(6)
             .lean(),
     );
-    console.log(creators);
+    if (error) return next(error);
 
     const defaultAvatar = "uploads/default/default-avatar.png";
-    creators = creators.map(async (creator: any) => {
-        if (creator.user?.avatar == null) {
-            creator.user.avatar = defaultAvatar;
-        }
-        // console.log(creator._id);
-        // const podcast = await Podcast.find({ creator: creator._id });
-        // creator.podcast = podcast || null;
-        return creator;
-    });
-    if (error) return next(error);
+    creators = await Promise.all(
+        creators.map(async (creator: any) => {
+            if (creator.user?.avatar == null) {
+                creator.user.avatar = defaultAvatar;
+            }
+            const podcast = await Podcast.findOne({ creator: creator._id })
+                .select("_id")
+                .limit(1)
+                .lean();
+            creator.podcast = podcast || null;
+            return creator;
+        }),
+    );
+
     [error, newPodcasts] = await to(
         Podcast.find()
             .select("title category cover audioDuration")
@@ -51,8 +56,8 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
             .limit(2)
             .lean(),
     );
-
     if (error) return next(error);
+
     newPodcasts = newPodcasts.map((podcast: any) => ({
         ...podcast,
         audioDuration: (podcast.audioDuration / 60).toFixed(2) + " min",
@@ -69,8 +74,8 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
             .limit(3)
             .lean(),
     );
-
     if (error) return next(error);
+
     popularPodcasts = popularPodcasts.map((podcast: any) => ({
         ...podcast,
         audioDuration: (podcast.audioDuration / 60).toFixed(2) + " min",

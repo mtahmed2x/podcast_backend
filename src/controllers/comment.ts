@@ -2,7 +2,7 @@ import Comment from "@models/comment";
 import to from "await-to-ts";
 import { Request, Response, NextFunction } from "express";
 import { updateCommentCount, updateLikeCount } from "@controllers/podcast";
-import { addNotification, removeLikeNotification } from "@controllers/notification";
+// import { addNotification, removeLikeNotification } from "@controllers/notification";
 import { Subject } from "@shared/enums";
 import Podcast from "@models/podcast";
 import createError from "http-errors";
@@ -29,7 +29,7 @@ const addComment = async (req: Request, res: Response, next: NextFunction): Prom
     if (error) return next(error);
 
     await updateCommentCount(id);
-    await addNotification(id, user.userId, Subject.COMMENT);
+    // await addNotification(id, user.userId, Subject.COMMENT);
 
     return res.status(httpStatus.OK).json({
         success: true,

@@ -2,7 +2,7 @@ import Like from "@models/like";
 import to from "await-to-ts";
 import { Request, Response, NextFunction } from "express";
 import { updateLikeCount } from "@controllers/podcast";
-import { addNotification, removeLikeNotification } from "@controllers/notification";
+// import { addNotification, removeLikeNotification } from "@controllers/notification";
 import { Subject } from "@shared/enums";
 import Podcast from "@models/podcast";
 import createError from "http-errors";
@@ -30,10 +30,12 @@ const likeToggle = async (req: Request, res: Response, next: NextFunction): Prom
         await updateLikeCount(id, value);
     }
 
-    if (value == 1) await addNotification(id, user.userId, Subject.LIKE);
-    if (value == -1) await removeLikeNotification(id, user.userId);
+    // if (value == 1) await addNotification(id, user.userId, Subject.LIKE);
+    // if (value == -1) await removeLikeNotification(id, user.userId);
 
-    return res.status(httpStatus.OK).json({ success: true, message: "Success", data: { like: value === 1 } });
+    return res
+        .status(httpStatus.OK)
+        .json({ success: true, message: "Success", data: { like: value === 1 } });
 };
 
 const LikeController = {

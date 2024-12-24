@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import to from "await-to-ts";
 import httpStatus from "http-status";
 import createError from "http-errors";
-import { addNotification } from "./notification";
+// import { addNotification } from "./notification";
 import { Subject } from "@shared/enums";
 import Podcast from "@models/podcast";
 import { PlaylistSchema } from "@schemas/playlist";
@@ -25,9 +25,9 @@ const create = async (req: Request, res: Response, next: NextFunction): Promise<
             }),
         );
         if (error) return next(error);
-        for (const podcast of podcasts) {
-            await addNotification(podcast, user.userId, Subject.PLAYLIST);
-        }
+        // for (const podcast of podcasts) {
+        //     await addNotification(podcast, user.userId, Subject.PLAYLIST);
+        // }
         return res
             .status(httpStatus.CREATED)
             .json({ success: true, message: "Success", data: playlist });
@@ -141,9 +141,9 @@ const addPodcast = async (req: Request, res: Response, next: NextFunction): Prom
     if (error) return next(error);
 
     // Notify for new podcasts
-    for (const podcast of newPodcasts) {
-        await addNotification(podcast, user.userId, Subject.PLAYLIST);
-    }
+    // for (const podcast of newPodcasts) {
+    //     await addNotification(podcast, user.userId, Subject.PLAYLIST);
+    // }
 
     return res.status(httpStatus.OK).json({
         success: true,

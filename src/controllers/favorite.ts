@@ -32,8 +32,8 @@ const ensureFavorite = async (userId: string, isPopulate: boolean): Promise<Favo
 };
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-    const page = Math.max(Number(req.query.page) || 1, 1); // Ensure page is at least 1
-    const limit = Math.max(Number(req.query.limit) || 10, 1); // Ensure limit is at least 1
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.max(Number(req.query.limit) || 10, 1);
 
     if (page <= 0 || limit <= 0) {
         return next(createError(httpStatus.BAD_REQUEST, "Invalid pagination parameters"));

@@ -63,11 +63,23 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const id = req.params.id;
     const title = req.body.title;
+    const files = (req as any).files;
+
+    let subCategoryImagePath;
+    if (files && files.subCategoryImage) {
+        subCategoryImagePath = files.subCategoryImage[0].path;
+    }
+
+    const updateData: any = {};
+    if (title) updateData.title = title;
+    if (subCategoryImagePath) updateData.subCategoryImage = subCategoryImagePath;
+
     const [error, subCategory] = await to(
-        SubCategory.findOneAndUpdate({ _id: id }, { $set: { title: title } }, { new: true }),
+        SubCategory.findOneAndUpdate({ _id: id }, { $set: updateData }, { new: true }),
     );
     if (error) return next(error);
     if (!subCategory) return next(createError(httpStatus.NOT_FOUND, "SubCategory not found"));
+
     return res.status(httpStatus.OK).json({ message: "Success", data: subCategory });
 };
 
