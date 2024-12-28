@@ -8,21 +8,21 @@ const CategoryRouter = express.Router();
 
 CategoryRouter.post("/create", authorize, isAdmin, handleFileUpload, CategoryController.create);
 CategoryRouter.get("/", authorize, CategoryController.getAll);
-CategoryRouter.get("/:id", authorize, ParamValidator, CategoryController.get);
+CategoryRouter.get("/:id", authorize, CategoryController.get);
 CategoryRouter.put(
-    "/update/:id",
-    authorize,
-    isAdmin,
-    ParamValidator,
-    handleFileUpload,
-    CategoryController.update,
+  "/update/:id",
+  authorize,
+  isAdmin,
+  ParamValidator,
+  handleFileUpload,
+  CategoryController.update,
 );
 CategoryRouter.delete("/delete/:id", authorize, isAdmin, ParamValidator, CategoryController.remove);
 CategoryRouter.get(
-    "/:id/sub-categories",
-    authorize,
-    ParamValidator,
-    CategoryController.getSubCategories,
+  "/:id/sub-categories",
+  authorize,
+  ParamValidator,
+  CategoryController.getSubCategories,
 );
 CategoryRouter.get("/:id/podcasts", authorize, ParamValidator, CategoryController.getPodcasts);
 

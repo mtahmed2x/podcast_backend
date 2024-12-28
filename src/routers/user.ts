@@ -7,5 +7,6 @@ import { handleFileUpload } from "@middlewares/uploadFile";
 
 router.get("/", authorize, UserController.get);
 router.put("/update", handleFileUpload, authorize, UserController.update);
+router.post("/update-location", authorize, UserController.updateLocation);
 
 export default router;

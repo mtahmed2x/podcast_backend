@@ -40,15 +40,29 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   if (address) updateFields.address = address;
   if (avatar) updateFields.avatar = avatar[0].path;
 
-  if (Object.keys(updateFields).length === 0) return next(createError(httpStatus.BAD_REQUEST, "No field to update"));
+  if (Object.keys(updateFields).length === 0)
+    return next(createError(httpStatus.BAD_REQUEST, "No field to update"));
 
   [error, user] = await to(User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true }));
   if (error) return next(error);
   return res.status(httpStatus.OK).json({ success: true, message: "Success", data: user });
 };
 
+const updateLocation = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const userId = req.user.userId;
+  const { location } = req.body;
+  const [error, user] = await to(
+    User.findByIdAndUpdate(userId, { $set: { locationPreference: location } }, { new: true }),
+  );
+  if (error) return next(error);
+  return res
+    .status(httpStatus.OK)
+    .json({ success: true, message: "Success", data: user?.locationPreference });
+};
+
 const UserController = {
   get,
   update,
+  updateLocation,
 };
 export default UserController;

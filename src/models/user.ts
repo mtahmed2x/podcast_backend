@@ -1,6 +1,6 @@
 import { UserSchema } from "@schemas/user";
 import { Schema, model } from "mongoose";
-import { Gender } from "@shared/enums";
+import { Gender, Subject } from "@shared/enums";
 
 const userSchema = new Schema<UserSchema>(
   {
@@ -34,6 +34,30 @@ const userSchema = new Schema<UserSchema>(
       type: String,
       default: null,
     },
+    notification: [
+      {
+        subject: {
+          type: String,
+          enum: Subject,
+          required: true,
+        },
+        podcast: {
+          type: Schema.Types.ObjectId,
+          required: false,
+        },
+        message: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          required: true,
+        },
+        updatedAt: {
+          type: Date,
+        },
+      },
+    ],
   },
   { timestamps: true },
 );

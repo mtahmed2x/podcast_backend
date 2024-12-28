@@ -14,7 +14,6 @@ export type NotificationSchema = Document & {
     subject: Subject;
     recipient: Types.ObjectId;
     podcast?: Types.ObjectId;
-    role: "user" | "creator";
     message: string;
     metadata?: {
         userIds?: Types.ObjectId[];
@@ -22,6 +21,4 @@ export type NotificationSchema = Document & {
         adminId?: Types.ObjectId;
     };
     isRead: boolean;
-    createdAt: Date;
-    updatedAt: Date;
 };

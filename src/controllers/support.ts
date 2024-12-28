@@ -4,7 +4,7 @@ import to from "await-to-ts";
 import { Request, Response, NextFunction } from "express";
 import createError from "http-errors";
 
-const add = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     const { text } = req.body;
     const [error, support] = await to(Support.create({ text: text }));
     if (error) return next(error);
@@ -30,7 +30,7 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
 };
 
 const SupportController = {
-    add,
+    create,
     get,
     update,
 };

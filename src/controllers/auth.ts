@@ -73,6 +73,10 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
         auth: auth._id,
         user: user._id,
       });
+      await Creator.create({
+        auth: auth._id,
+        user: user._id,
+      });
     }
 
     await sendEmail(email, verificationOTP);
@@ -105,8 +109,10 @@ const verifyEmail = async (payload: Payload): Promise<[Error | null, AuthSchema 
   let [error, auth] = await to(Auth.findOne({ email }).select("-password"));
   if (error) return [error, null];
   if (!auth) return [createError(httpStatus.NOT_FOUND, "Account Not found"), null];
-  if (auth.verificationOTP === null) return [createError(httpStatus.UNAUTHORIZED, "OTP Expired"), null];
-  if (verificationOTP !== auth.verificationOTP) return [createError(httpStatus.UNAUTHORIZED, "Wrong OTP"), null];
+  if (auth.verificationOTP === null)
+    return [createError(httpStatus.UNAUTHORIZED, "OTP Expired"), null];
+  if (verificationOTP !== auth.verificationOTP)
+    return [createError(httpStatus.UNAUTHORIZED, "Wrong OTP"), null];
   // if (new Date() > auth.verificationOTPExpire!) {
   //   throw createError(httpStatus.GONE, "Verification OTP has expired");
   // } else
@@ -124,7 +130,8 @@ const activate = async (req: Request, res: Response, next: NextFunction): Promis
   await auth.save();
 
   const accessSecret = process.env.JWT_ACCESS_SECRET;
-  if (!accessSecret) return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "JWT secret is not defined."));
+  if (!accessSecret)
+    return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "JWT secret is not defined."));
   const accessToken = generateToken(auth._id!.toString(), accessSecret, "96h");
 
   const user = await User.find({ auth: auth._id });
@@ -151,9 +158,12 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<a
 
   const isPasswordValid = await bcrypt.compare(password, auth.password);
   if (!isPasswordValid) return next(createError(httpStatus.UNAUTHORIZED, "Wrong password"));
-  if (!auth.isVerified) return next(createError(httpStatus.UNAUTHORIZED, "Verify your email first"));
+  if (!auth.isVerified)
+    return next(createError(httpStatus.UNAUTHORIZED, "Verify your email first"));
   if (auth.isBlocked)
-    return next(createError(httpStatus.FORBIDDEN, "Your account had been blocked. Contact Administrator"));
+    return next(
+      createError(httpStatus.FORBIDDEN, "Your account had been blocked. Contact Administrator"),
+    );
 
   const accessSecret = process.env.JWT_ACCESS_SECRET;
   const refreshSecret = process.env.JWT_REFRESH_SECRET;
@@ -191,7 +201,9 @@ const forgotPassword = async (req: Request, res: Response, next: NextFunction): 
   await auth.save();
   await sendEmail(email, verificationOTP);
 
-  return res.status(httpStatus.OK).json({ success: true, message: "Success. Verification mail sent." });
+  return res
+    .status(httpStatus.OK)
+    .json({ success: true, message: "Success. Verification mail sent." });
 };
 
 const verifyOTP = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -212,11 +224,14 @@ const resetPassword = async (req: Request, res: Response, next: NextFunction): P
   const [error, auth] = await to(Auth.findOne({ email }));
   if (error) return next(error);
   if (!auth) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
-  if (password !== confirmPassword) return next(createError(httpStatus.BAD_REQUEST, "Passwords don't match"));
+  if (password !== confirmPassword)
+    return next(createError(httpStatus.BAD_REQUEST, "Passwords don't match"));
   auth!.password = await bcrypt.hash(password, 10);
   await auth.save();
 
-  return res.status(httpStatus.OK).json({ success: true, message: "Success. Password changed", data: {} });
+  return res
+    .status(httpStatus.OK)
+    .json({ success: true, message: "Success. Password changed", data: {} });
 };
 
 const getAccessToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

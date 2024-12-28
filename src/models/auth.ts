@@ -37,6 +37,10 @@ const authSchema = new Schema<AuthSchema>(
       required: true,
       default: false,
     },
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

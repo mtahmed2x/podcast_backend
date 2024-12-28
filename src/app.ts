@@ -26,18 +26,20 @@ import PrivacyRouter from "@routers/privacy";
 import SearchRouter from "@routers/search";
 import SupportRouter from "@routers/support";
 import ReportRouter from "@routers/report";
+import DonationRouter from "@routers/donation";
+import NotificationRouter from "@routers/notification";
 /* Import End */
 
 const app = express();
 
 app.use(
-    cors({
-        origin: "*",
-        methods: ["GET", "POST", "PUT", "DELETE"],
-        credentials: true,
-    }),
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  }),
 );
-/* Custom Router Start */
+
 app.use("/", WebHookRouter);
 
 app.use(express.json());
@@ -66,11 +68,17 @@ app.use("/privacy", PrivacyRouter);
 app.use("/search", SearchRouter);
 app.use("/support", SupportRouter);
 app.use("/report", ReportRouter);
+app.use("/donation", DonationRouter);
+app.use("/notification", NotificationRouter);
 
 /* Custom Router End */
 
 /* Default Routers */
 app.use(notFound);
 app.use(errorHandler);
+
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
 
 export default app;

@@ -1,5 +1,5 @@
 import { Document, Types } from "mongoose";
-import { Gender } from "@shared/enums";
+import { Gender, Subject } from "@shared/enums";
 
 export type UserSchema = Document & {
   auth: Types.ObjectId;
@@ -9,4 +9,12 @@ export type UserSchema = Document & {
   contact: string;
   address: string;
   avatar: string;
+  locationPreference: string;
+  notification: {
+    subject: Subject;
+    podcast?: Types.ObjectId;
+    message: string;
+    createdAt: Date;
+    updatedAt?: Date;
+  }[];
 };

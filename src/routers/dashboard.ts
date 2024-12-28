@@ -12,6 +12,7 @@ router.put("/update", authorize, isAdmin, DashboardController.updateProfile);
 router.put("/change-password", authorize, isAdmin, DashboardController.changePassword);
 router.post("/block/:id", authorize, isAdmin, DashboardController.block);
 router.post("/unblock/:id", authorize, isAdmin, DashboardController.unblock);
+router.post("/approve/:id", authorize, isAdmin, DashboardController.unblock);
 router.get("/income", authorize, isAdmin, DashboardController.incomeByMonth);
 router.get("/total-subscriber", authorize, isAdmin, DashboardController.totalSubscriber);
 router.get("/subscriber", authorize, isAdmin, DashboardController.subscribersByMonth);

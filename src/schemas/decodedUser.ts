@@ -10,4 +10,5 @@ export type DecodedUser = {
   role: Role;
   creatorId?: string;
   adminId?: string;
+  locationPreference: string;
 };

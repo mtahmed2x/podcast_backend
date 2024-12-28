@@ -27,6 +27,7 @@ export const getUserInfo = async (authId: string): Promise<DecodedUser | null> =
     isBlocked: auth.isBlocked,
     userId: user._id!.toString(),
     name: user.name,
+    locationPreference: user.locationPreference,
   };
   if (auth.role === Role.CREATOR) {
     [error, creator] = await to(Creator.findOne({ auth: auth._id }));
@@ -76,8 +77,14 @@ const authorizeToken = (secret: string, errorMessage: string) => {
 };
 
 export const authorize = authorizeToken(process.env.JWT_ACCESS_SECRET!, "Invalid Token");
-export const refreshAuthorize = authorizeToken(process.env.JWT_REFRESH_SECRET!, "Invalid Refresh Token");
-export const recoveryAuthorize = authorizeToken(process.env.JWT_RECOVERY_SECRET!, "Invalid Recovery Token");
+export const refreshAuthorize = authorizeToken(
+  process.env.JWT_REFRESH_SECRET!,
+  "Invalid Refresh Token",
+);
+export const recoveryAuthorize = authorizeToken(
+  process.env.JWT_RECOVERY_SECRET!,
+  "Invalid Recovery Token",
+);
 
 export const isAdmin = hasAccess([Role.ADMIN]);
 export const isCreator = hasAccess([Role.CREATOR]);

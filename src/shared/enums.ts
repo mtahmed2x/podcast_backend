@@ -1,24 +1,31 @@
 export enum Role {
-    USER = "USER",
-    CREATOR = "CREATOR",
-    ADMIN = "ADMIN",
+  USER = "USER",
+  CREATOR = "CREATOR",
+  ADMIN = "ADMIN",
 }
 
 export enum Subject {
-    LIKE = "LIKE",
-    COMMENT = "COMMENT",
-    SUBSCRIPTION = "SUBSCRIPTION",
+  LIKE = "LIKE",
+  COMMENT = "COMMENT",
+  APPROVED = "APPROVED",
+  BLOCKED = "BLOCKED",
+  DELETED = "DELETED",
+  REPORTED = "REPORTED",
+  PLAN = "PLAN",
+  PLAN_CANCELLED = "PLAN_CANCELLED",
+  PAYMENT_SUCCESSED = "PAYMENT_SUCCESSED",
+  PAYMENT_FAILED = "PAYMENT_FAILED",
 }
 
 export enum Gender {
-    MALE = "male",
-    FEMALE = "female",
+  MALE = "male",
+  FEMALE = "female",
 }
 
 export enum SubscriptionStatus {
-    ACTIVE = "active",
-    PENDING = "pending",
-    PAYMENT_FAILED = "payment_failed",
-    CANCELED = "canceled",
-    AUTO_CANCELED = "canceled_due_to_failed_payments",
+  ACTIVE = "active",
+  PENDING = "pending",
+  PAYMENT_FAILED = "payment_failed",
+  CANCELED = "canceled",
+  AUTO_CANCELED = "canceled_due_to_failed_payments",
 }
