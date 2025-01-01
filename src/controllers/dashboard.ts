@@ -11,7 +11,11 @@ import "dotenv/config";
 import { UserSchema } from "@schemas/user";
 import { Role } from "@shared/enums";
 
-const displayAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const displayAllUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
   const [error, users] = await to(
     User.find()
       .populate({
@@ -26,7 +30,11 @@ const displayAllUsers = async (req: Request, res: Response, next: NextFunction):
   return res.status(200).json({ message: "Successful", data: users });
 };
 
-const searchUsersByName = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const searchUsersByName = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
   const { name } = req.query;
 
   if (!name) {
@@ -54,7 +62,9 @@ const searchUsersByName = async (req: Request, res: Response, next: NextFunction
 
   if (error) return next(error);
 
-  return res.status(200).json({ success: true, message: "Successful", data: users });
+  return res
+    .status(200)
+    .json({ success: true, message: "Successful", data: users });
 };
 
 const displayAllCreators = async (
@@ -145,7 +155,11 @@ const searchCreatorsByName = async (
   return res.status(200).json({ message: "Successful", data: creators });
 };
 
-const adminProfile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const adminProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
   const user = req.user;
   const [error, admin] = await to(
     Admin.findOne({ auth: user.authId, user: user.userId })
@@ -154,21 +168,28 @@ const adminProfile = async (req: Request, res: Response, next: NextFunction): Pr
   );
   if (error) return next(error);
   if (!admin) return next(createError(404, "No Admin Found"));
-  return res.status(200).json({ success: true, message: "Success", data: admin });
+  return res
+    .status(200)
+    .json({ success: true, message: "Success", data: admin });
 };
 
 const generateToken = (id: string): string => {
   return jwt.sign({ id }, process.env.JWT_ACCESS_SECRET!, { expiresIn: "96h" });
 };
 
-const login = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
   const { email, password } = req.body;
   const [error, auth] = await to(Auth.findOne({ email }));
   if (error) return next(error);
   if (!auth) return res.status(404).json({ error: "Email don't exist" });
 
   const isPasswordValid = await bcrypt.compare(password, auth.password);
-  if (!isPasswordValid) return res.status(401).json({ error: "Wrong password" });
+  if (!isPasswordValid)
+    return res.status(401).json({ error: "Wrong password" });
   if (auth.role !== "ADMIN") {
     return next(createError(403, "Access Denied. Only Admin Allowed"));
   }
@@ -176,7 +197,11 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<a
   return res.status(200).json({ message: "Login Successful", token: token });
 };
 
-const updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
   const user = req.user;
   const { name, contact, address } = req.body;
 
@@ -192,20 +217,31 @@ const updateProfile = async (req: Request, res: Response, next: NextFunction): P
     User.findByIdAndUpdate(user.userId, { $set: updateFields }, { new: true }),
   );
   if (error) return next(error);
-  return res.status(200).json({ message: "Update successful", data: updatedUser });
+  return res
+    .status(200)
+    .json({ message: "Update successful", data: updatedUser });
 };
 
-const changePassword = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
   const user = req.user;
   const { password, newPassword, confirmPassword } = req.body;
   let [error, auth] = await to(Auth.findById(user.authId));
   if (error) return next(error);
   const isPasswordValid = await bcrypt.compare(password, auth!.password);
   if (!isPasswordValid) return next(createError(401, "Incorrect Password"));
-  if (newPassword !== confirmPassword) return next(createError(400, "Password's don't match"));
+  if (newPassword !== confirmPassword)
+    return next(createError(400, "Password's don't match"));
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   [error, auth] = await to(
-    Auth.findByIdAndUpdate(user.authId, { $set: { password: hashedPassword } }, { new: true }),
+    Auth.findByIdAndUpdate(
+      user.authId,
+      { $set: { password: hashedPassword } },
+      { new: true },
+    ),
   );
   if (error) return next(error);
   res.status(200).json({ success: true, message: "Success", data: {} });
@@ -213,39 +249,6 @@ const changePassword = async (req: Request, res: Response, next: NextFunction): 
 
 type Param = {
   id: string;
-};
-
-const block = async (req: Request<Param>, res: Response, next: NextFunction): Promise<any> => {
-  const id = req.params.id;
-  const [error, auth] = await to(
-    Auth.findByIdAndUpdate(id, { $set: { isBlocked: true } }, { new: true }),
-  );
-  if (error) next(error);
-  return res
-    .status(200)
-    .json({ success: true, message: "Success", data: { isBlocked: auth?.isBlocked } });
-};
-
-const unblock = async (req: Request<Param>, res: Response, next: NextFunction): Promise<any> => {
-  const id = req.params.id;
-  const [error, auth] = await to(
-    Auth.findByIdAndUpdate(id, { $set: { isBlocked: false } }, { new: true }),
-  );
-  if (error) next(error);
-  return res
-    .status(200)
-    .json({ success: true, message: "Success", data: { isBlocked: auth?.isBlocked } });
-};
-
-const approve = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const id = req.params.id;
-  const [error, auth] = await to(
-    Auth.findByIdAndUpdate(id, { $set: { isApproved: true } }, { new: true }),
-  );
-  if (error) next(error);
-  return res
-    .status(200)
-    .json({ success: true, message: "Success", data: { isBlocked: auth?.isApproved } });
 };
 
 const totalSubscriber = async (
@@ -256,7 +259,11 @@ const totalSubscriber = async (
   return res.status(200).json({ success: true, message: "Success", data: 20 });
 };
 
-const incomeByMonth = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const incomeByMonth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<any> => {
   const income = {
     Jan: 3200,
     Feb: 2800,
@@ -271,7 +278,9 @@ const incomeByMonth = async (req: Request, res: Response, next: NextFunction): P
     Nov: 3600,
     Dec: 3800,
   };
-  return res.status(200).json({ success: true, message: "Success", data: income });
+  return res
+    .status(200)
+    .json({ success: true, message: "Success", data: income });
 };
 
 const subscribersByMonth = async (
@@ -294,7 +303,9 @@ const subscribersByMonth = async (
     Dec: 2200,
   };
 
-  return res.status(200).json({ success: true, message: "Success", data: subscribers });
+  return res
+    .status(200)
+    .json({ success: true, message: "Success", data: subscribers });
 };
 
 const DashboardController = {
@@ -304,9 +315,6 @@ const DashboardController = {
   login,
   updateProfile,
   changePassword,
-  block,
-  unblock,
-  approve,
   totalSubscriber,
   incomeByMonth,
   subscribersByMonth,

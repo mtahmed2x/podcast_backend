@@ -21,9 +21,8 @@ import { Role } from "@shared/enums";
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { name, email, role, dateOfBirth, address, password, confirmPassword } = req.body;
-  let error, auth, user;
+  let error, auth, user, creator, admin;
   [error, auth] = await to(Auth.findOne({ email }));
-
   if (error) return next(error);
   if (auth) {
     const otp = generateOTP();
@@ -46,42 +45,41 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
   session.startTransaction();
 
   try {
-    auth = await Auth.create({
+    [error, auth] = await to(Auth.create({
       email,
       password: hashedPassword,
       role,
       verificationOTP: verificationOTP,
       verificationOTPExpire,
-    });
+    }));
+    if(error) throw error;
 
-    user = await User.create({
+    [error, user] = await to(User.create({
       auth: auth!._id,
       name: name,
       dateOfBirth: dateOfBirth,
       address: address,
-    });
+    }));
+    if(error) throw error;
 
-    if (role === "CREATOR") {
-      await Creator.create({
+    if (role === "CREATOR" || role === "ADMIN") {
+      [error, creator] = await to(Creator.create({
         auth: auth._id,
         user: user._id,
-      });
+      }));
+      if(error) throw error;
     }
 
     if (role === "ADMIN") {
-      await Admin.create({
+      [error, admin] = await to(Admin.create({
         auth: auth._id,
         user: user._id,
-      });
-      await Creator.create({
-        auth: auth._id,
-        user: user._id,
-      });
+        creator: creator!._id,
+      }));
     }
 
     await sendEmail(email, verificationOTP);
     await session.commitTransaction();
-    await session.endSession();
 
     return res.status(201).json({
       success: true,
@@ -91,9 +89,10 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
   } catch (error) {
     if (session.inTransaction()) {
       await session.abortTransaction();
-      await session.endSession();
     }
     return next(error);
+  } finally {
+    await session.endSession();
   }
 };
 

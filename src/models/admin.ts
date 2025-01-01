@@ -12,6 +12,11 @@ const adminSchema = new Schema<AdminSchema>({
     ref: "User",
     required: true,
   },
+  creator: {
+    type: Schema.Types.ObjectId,
+    ref: "Creator",
+    required: true,
+  }
 });
 
 const Admin = model<AdminSchema>("Admin", adminSchema);
