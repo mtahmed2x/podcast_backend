@@ -12,9 +12,13 @@ import { Role } from "@shared/enums";
 import { decodeToken } from "@utils/jwt";
 import { DecodedUser } from "@schemas/decodedUser";
 
-export const getUserInfo = async (authId: string): Promise<DecodedUser | null> => {
+export const getUserInfo = async (
+  authId: string,
+): Promise<DecodedUser | null> => {
   let error, auth, user, creator, admin;
-  [error, auth] = await to(Auth.findById(authId).select("email role isVerified isBlocked"));
+  [error, auth] = await to(
+    Auth.findById(authId).select("email role isVerified isBlocked"),
+  );
   if (error || !auth) return null;
   [error, user] = await to(User.findOne({ auth: authId }));
   if (error || !user) return null;
@@ -29,7 +33,7 @@ export const getUserInfo = async (authId: string): Promise<DecodedUser | null> =
     name: user.name,
     locationPreference: user.locationPreference,
   };
-  if (auth.role === Role.CREATOR) {
+  if (auth.role === Role.CREATOR || auth.role === Role.ADMIN) {
     [error, creator] = await to(Creator.findOne({ auth: auth._id }));
     if (error || !creator) return null;
     data.creatorId = creator._id!.toString();
@@ -52,7 +56,11 @@ const hasAccess = (roles: Role[]) => {
 };
 
 const authorizeToken = (secret: string, errorMessage: string) => {
-  return async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<any> => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer")) {
       return next(createError(401, "Not Authorized"));
@@ -76,7 +84,10 @@ const authorizeToken = (secret: string, errorMessage: string) => {
   };
 };
 
-export const authorize = authorizeToken(process.env.JWT_ACCESS_SECRET!, "Invalid Token");
+export const authorize = authorizeToken(
+  process.env.JWT_ACCESS_SECRET!,
+  "Invalid Token",
+);
 export const refreshAuthorize = authorizeToken(
   process.env.JWT_REFRESH_SECRET!,
   "Invalid Refresh Token",
