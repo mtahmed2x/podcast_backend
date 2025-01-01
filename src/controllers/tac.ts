@@ -7,14 +7,14 @@ const add = async (req: Request, res: Response, next: NextFunction): Promise<any
   const { text } = req.body;
   const [error, tac] = await to(TaC.create({ text: text }));
   if (error) return next(error);
-  res.status(201).json({ message: "Success", data: tac });
+  res.status(httpStatus.CREATED).json({ success: true, message: "Success", data: tac });
 };
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const [error, tac] = await to(TaC.findOne().limit(1));
+  const [error, tac] = await to(TaC.findOne().lean());
   if (error) return next(error);
-  if (!tac) return next(createError(404, "Terms and Condition not found"));
-  res.status(200).json({ message: "Success", data: tac });
+  if (!tac) return res.status(httpStatus.OK).json({success: true, message: "No terms and conditions", data : {} });
+  res.status(httpStatus.OK).json({ success: true, message: "Success", data: tac });
 };
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -22,8 +22,8 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   const { text } = req.body;
   const [error, tac] = await to(TaC.findByIdAndUpdate(id, { $set: { text: text } }, { new: true }));
   if (error) return next(error);
-  if (!tac) return next(createError(404, "Terms and Condition not found"));
-  res.status(200).json({ message: "Success", data: tac });
+  if (!tac) return next(createError(httpStatus.NOT_FOUND, "Terms and condition not found"));
+  res.status(httpStatus.OK).json({ success: true, message: "Success", data: tac });
 };
 
 const TaCController = {

@@ -7,14 +7,14 @@ const add = async (req: Request, res: Response, next: NextFunction): Promise<any
   const { text } = req.body;
   const [error, about] = await to(About.create({ text: text }));
   if (error) return next(error);
-  res.status(201).json({ message: "Success", data: about });
+  res.status(httpStatus.CREATED).json({ success: true, message: "Success", data: about });
 };
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const [error, about] = await to(About.findOne().limit(1));
+  const [error, about] = await to(About.findOne());
   if (error) return next(error);
-  if (!about) return next(createError(404, "About Us not found"));
-  res.status(200).json({ message: "Success", data: about });
+  if (!about) return res.status(httpStatus.OK).json({success: true, message: "No about us", data : {} });
+  res.status(httpStatus.OK).json({ success: true, message: "Success", data: about });
 };
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -22,8 +22,8 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   const { text } = req.body;
   const [error, about] = await to(About.findByIdAndUpdate(id, { $set: { text: text } }, { new: true }));
   if (error) return next(error);
-  if (!about) return next(createError(404, "About Us not found"));
-  res.status(200).json({ message: "Success", data: about });
+  if (!about) return next(createError(httpStatus.NOT_FOUND, "About Us not found"));
+  res.status(httpStatus.OK).json({ success: true, message: "Success", data: about });
 };
 
 const AboutController = {

@@ -4,8 +4,8 @@ import { authorize, isAdmin } from "@middlewares/authorization";
 
 const router = express.Router();
 
-router.post("/add", PrivacyController.add);
+router.post("/add", authorize, isAdmin, PrivacyController.add);
 router.get("/", authorize, PrivacyController.get);
-router.put("/update/:id", authorize, PrivacyController.update);
+router.put("/update/:id", authorize, isAdmin, PrivacyController.update);
 
 export default router;
