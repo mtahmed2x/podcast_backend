@@ -25,19 +25,22 @@ export const getUserInfo = async (
 
   const data: DecodedUser = {
     authId: auth._id!.toString(),
-    email: auth.email,
-    role: auth.role,
-    isVerified: auth.isVerified,
-    isBlocked: auth.isBlocked,
     userId: user._id!.toString(),
     name: user.name,
+    role: auth.role,
+    email: auth.email,
+    isVerified: auth.isVerified,
+    isApproved: auth.isApproved,
+    isBlocked: auth.isBlocked,
     locationPreference: user.locationPreference,
   };
+
   if (auth.role === Role.CREATOR || auth.role === Role.ADMIN) {
     [error, creator] = await to(Creator.findOne({ auth: auth._id }));
     if (error || !creator) return null;
     data.creatorId = creator._id!.toString();
   }
+
   if (auth.role === Role.ADMIN) {
     [error, admin] = await to(Admin.findOne({ auth: auth._id }));
     if (error || !admin) return null;
@@ -49,9 +52,29 @@ export const getUserInfo = async (
 const hasAccess = (roles: Role[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const user = req.user;
-    console.log(user);
-    if (roles.includes(user.role as Role)) return next();
-    return next(createError(403, "Access Denied."));
+    if (!roles.includes(user.role as Role))
+      return next(
+        createError(
+          httpStatus.FORBIDDEN,
+          "Access Denied. You don't have sufficient permission",
+        ),
+      );
+    if (!user.isApproved)
+      return next(
+        createError(
+          httpStatus.FORBIDDEN,
+          "Access Denied. Wait for Admin's approval.",
+        ),
+      );
+    if (user.isBlocked)
+      return next(
+        createError(
+          httpStatus.FORBIDDEN,
+          "Access Denied. You have been blocked by the admin",
+        ),
+      );
+
+    return next();
   };
 };
 
