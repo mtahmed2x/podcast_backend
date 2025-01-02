@@ -5,87 +5,155 @@ import Creator from "@models/creator";
 import httpStatus from "http-status";
 import Podcast from "@models/podcast";
 import Admin from "@models/admin";
+import { Types } from "mongoose";
 
 const homeController = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const location = req.user.locationPreference || null;
+  try {
+    const location = req.user.locationPreference || null;
+    const defaultAvatar = "uploads/default/default-avatar.png";
+    const creatorId = new Types.ObjectId(process.env.CREATORID);
 
-  let error, admin, categories, creators, newPodcasts, popularPodcasts;
+    const formatAudioDuration = (duration: number): string => `${(duration / 60).toFixed(2)} min`;
 
-  [error, categories] = await to(Category.find().select("title categoryImage").limit(4).lean());
-  if (error) return next(error);
-  [error, admin] = await to(
-    Admin.findOne().select("user").populate({ path: "user", select: "name avatar -_id" }).lean(),
-  );
-  if (error) return next(error);
+    /* Categories */
+    const categoriesPromise = Category.find().select("title categoryImage").limit(4).lean();
 
-  [error, creators] = await to(
-    Creator.find()
-      .select("user")
-      .populate({
-        path: "user",
-        select: "name avatar -_id",
-      })
-      .limit(6)
-      .lean(),
-  );
-  if (error) return next(error);
-  const defaultAvatar = "uploads/default/default-avatar.png";
-  creators = await Promise.all(
-    creators.map(async (creator: any) => {
-      if (creator.user?.avatar == null) {
-        creator.user.avatar = defaultAvatar;
+    /* Admin */
+    const adminPromise = Podcast.aggregate([
+      { $match: { creator: creatorId } },
+      { $sort: { totalLikes: -1 } },
+      { $limit: 1 },
+      {
+        $lookup: {
+          from: "creators",
+          localField: "creator",
+          foreignField: "_id",
+          as: "creatorDetails",
+        },
+      },
+      { $unwind: "$creatorDetails" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "creatorDetails.user",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      { $unwind: "$userDetails" },
+      {
+        $project: {
+          _id: 0,
+          name: "$userDetails.name",
+          avatar: { $ifNull: ["$userDetails.avatar", defaultAvatar] },
+          podcast: "$_id",
+        },
+      },
+    ]);
+
+    /* Creators */
+    const creatorsPromise = Podcast.aggregate([
+      { $match: { creator: { $ne: creatorId } } },
+      {
+        $group: {
+          _id: "$creator",
+          totalLikes: { $max: "$totalLikes" },
+          podcast: { $first: "$_id" },
+          title: { $first: "$title" },
+          description: { $first: "$description" },
+        },
+      },
+      { $sort: { totalLikes: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: "creators",
+          localField: "_id",
+          foreignField: "_id",
+          as: "creatorDetails",
+        },
+      },
+      { $unwind: "$creatorDetails" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "creatorDetails.user",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      { $unwind: "$userDetails" },
+      {
+        $project: {
+          _id: 0,
+          name: "$userDetails.name",
+          avatar: { $ifNull: ["$userDetails.avatar", defaultAvatar] },
+          podcast: 1,
+        },
+      },
+    ]);
+
+    /* Podcasts */
+    const fetchPodcasts = async (sortField: string, limit: number, locationFilter: boolean) => {
+      const query = locationFilter && location ? { location } : {};
+      const podcasts = await Podcast.find(query)
+        .select("title category cover audioDuration")
+        .populate({
+          path: "category",
+          select: "title -_id",
+        })
+        .sort({ [sortField]: -1 })
+        .limit(limit)
+        .lean();
+
+      if (locationFilter && podcasts.length === 0 && location) {
+        // Fallback to original query if location-filtered query yields no results
+        return Podcast.find()
+          .select("title category cover audioDuration")
+          .populate({
+            path: "category",
+            select: "title -_id",
+          })
+          .sort({ [sortField]: -1 })
+          .limit(limit)
+          .lean();
       }
-      const podcast = await Podcast.findOne({ creator: creator._id }).select("_id").limit(1).lean();
-      creator.podcast = podcast || null;
-      return creator;
-    }),
-  );
 
-  const formatAudioDuration = (duration: number): string => {
-    return (duration / 60).toFixed(2) + " min";
-  };
+      return podcasts;
+    };
 
-  [error, newPodcasts] = await to(
-    Podcast.find()
-      .select("title category cover audioDuration")
-      .populate({
-        path: "category",
-        select: "title -_id",
-      })
-      .sort({ createdAt: -1 })
-      .limit(2)
-      .lean(),
-  );
-  if (error) return next(error);
+    const newPodcastsPromise = fetchPodcasts("createdAt", 2, true);
+    const popularPodcastsPromise = fetchPodcasts("totalLikes", 3, true);
 
-  newPodcasts = newPodcasts.map((podcast: any) => ({
-    ...podcast,
-    audioDuration: formatAudioDuration(podcast.audioDuration),
-  }));
+    const [categories, admin, creators, newPodcasts, popularPodcasts] = await Promise.all([
+      categoriesPromise,
+      adminPromise,
+      creatorsPromise,
+      newPodcastsPromise,
+      popularPodcastsPromise,
+    ]);
 
-  [error, popularPodcasts] = await to(
-    Podcast.find()
-      .select("title category cover audioDuration")
-      .populate({
-        path: "category",
-        select: "title -_id",
-      })
-      .sort({ createdAt: -1 })
-      .limit(3)
-      .lean(),
-  );
-  if (error) return next(error);
+    const formatPodcasts = (podcasts: any[]) =>
+      podcasts.map((podcast) => ({
+        ...podcast,
+        audioDuration: formatAudioDuration(podcast.audioDuration),
+      }));
 
-  popularPodcasts = popularPodcasts.map((podcast: any) => ({
-    ...podcast,
-    audioDuration: formatAudioDuration(podcast.audioDuration),
-  }));
-
-  return res.status(httpStatus.OK).json({
-    success: true,
-    message: "Success",
-    data: { location: location, categories, admin, creators, newPodcasts, popularPodcasts },
-  });
+    return res.status(httpStatus.OK).json({
+      success: true,
+      message: "Success",
+      data: {
+        location,
+        categories,
+        admin: admin[0] || null,
+        creators,
+        newPodcasts: formatPodcasts(newPodcasts),
+        popularPodcasts: formatPodcasts(popularPodcasts),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
 };
 
 export default homeController;

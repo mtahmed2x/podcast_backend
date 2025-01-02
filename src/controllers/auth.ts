@@ -121,9 +121,6 @@ const verifyEmail = async (payload: Payload): Promise<[Error | null, AuthSchema 
     return [createError(httpStatus.UNAUTHORIZED, "OTP Expired"), null];
   if (verificationOTP !== auth.verificationOTP)
     return [createError(httpStatus.UNAUTHORIZED, "Wrong OTP"), null];
-  // if (new Date() > auth.verificationOTPExpire!) {
-  //   throw createError(httpStatus.GONE, "Verification OTP has expired");
-  // } else
   return [null, auth];
 };
 
