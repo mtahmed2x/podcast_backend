@@ -1,16 +1,15 @@
 import AuthController from "@controllers/auth";
 import express from "express";
 import { authorize, isUserOrCreator, refreshAuthorize } from "@middlewares/authorization";
-import { emailValidator, otpValidator, passwordValidator, validateRegisterInput } from "@middlewares/validation";
 import DashboardController from "@controllers/dashboard";
 
 const router = express.Router();
 
-router.post("/register", validateRegisterInput, AuthController.register);
-router.post("/activate", emailValidator, otpValidator, AuthController.activate);
-router.post("/login", emailValidator, AuthController.login);
-router.post("/forgot-password", emailValidator, AuthController.forgotPassword);
-router.post("/verify-otp", emailValidator, otpValidator, AuthController.verifyOTP);
+router.post("/register", AuthController.register);
+router.post("/activate", AuthController.activate);
+router.post("/login", AuthController.login);
+router.post("/forgot-password", AuthController.forgotPassword);
+router.post("/verify-otp", AuthController.verifyOTP);
 router.put("/reset-password", AuthController.resetPassword);
 router.put("/change-password", authorize, isUserOrCreator, DashboardController.changePassword);
 router.delete("/delete", authorize, isUserOrCreator, AuthController.remove);

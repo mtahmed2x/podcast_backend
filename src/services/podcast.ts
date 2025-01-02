@@ -9,6 +9,7 @@ import to from "await-to-ts";
 import { Request, Response, NextFunction } from "express";
 import createError from "http-errors";
 import mongoose from "mongoose";
+import httpStatus from "http-status";
 
 const popularPodcasts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const page = Number(req.query.page) || 1;
@@ -197,85 +198,80 @@ const play = async (req: Request, res: Response, next: NextFunction): Promise<an
 
 const playNext = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const user = req.user;
-  const id = req.params.id;
+  let isLiked = false,
+    isFavorited = false;
 
-  let error, randomPodcast;
-  [error, randomPodcast] = await to(
-    Podcast.aggregate([
-      {
-        $match: {
-          _id: { $ne: new mongoose.Types.ObjectId(id) },
-        },
-      },
-      { $sample: { size: 1 } },
-    ]),
-  );
-  if (error) return next(error);
+  const podcastId = req.params.id;
+  if (!podcastId) return next(createError(httpStatus.BAD_REQUEST, "Podcast ID is required"));
 
-  if (!randomPodcast || randomPodcast.length === 0) {
-    return res.status(httpStatus.OK).json({
-      success: true,
-      message: "No Podcast Found",
-      data: null,
-    });
-  }
+  const podcast = await Podcast.findById(podcastId).catch((err) => next(err));
+  if (!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast not found"));
 
-  [error, randomPodcast] = await to(
-    Podcast.findById(randomPodcast[0]._id)
+  const { creator, category, subCategory, location } = podcast;
+
+  const fields: Partial<Record<"creator" | "category" | "subCategory" | "location", any>> = {
+    creator,
+    category,
+    subCategory,
+    location,
+  };
+
+  const findPodcasts = async (query: Record<string, any>, limit: number = 1) => {
+    return Podcast.find(query)
+      .limit(limit)
       .populate({
         path: "creator",
         select: "user -_id donations",
-        populate: {
-          path: "user",
-          select: "name -_id",
-        },
+        populate: { path: "user", select: "name -_id" },
       })
-      .populate({
-        path: "category",
-        select: "title",
-      })
-      .populate({
-        path: "subCategory",
-        select: "title",
-      })
-      .lean(),
-  );
-  if (error) return next(error);
+      .populate({ path: "category", select: "title" })
+      .populate({ path: "subCategory", select: "title" })
+      .lean();
+  };
 
-  if (randomPodcast!.creator) {
-    const creator = randomPodcast!.creator as any;
-    creator.donations = creator.donations ?? null;
+  const queryBase: Record<string, any> = { _id: { $ne: podcastId } };
+
+  for (let i = 4; i >= 0; i--) {
+    const query = { ...queryBase };
+    if (i > 0) {
+      const keys = Object.keys(fields).slice(0, i) as Array<keyof typeof fields>;
+      keys.forEach((key) => {
+        if (fields[key]) query[key] = fields[key];
+      });
+    }
+
+    const matchingPodcasts = await findPodcasts(query);
+    if (matchingPodcasts.length > 0) {
+      const nextPodcast = matchingPodcasts[0];
+
+      if (nextPodcast.creator) {
+        const creator = nextPodcast.creator as any;
+        creator.donations = creator.donations ?? null;
+      }
+
+      await addPodcast(user.userId, nextPodcast._id!.toString());
+
+      nextPodcast.totalViews += 1;
+      await Podcast.findByIdAndUpdate(nextPodcast._id, { totalViews: nextPodcast.totalViews });
+
+      const like = await Like.findOne({ podcast: nextPodcast._id, user: user.userId });
+      isLiked = !!like;
+
+      const favorite = await Favorite.findOne({ user: user.userId, podcasts: nextPodcast._id });
+      isFavorited = !!favorite;
+
+      return res.status(httpStatus.OK).json({
+        success: true,
+        message: "Success",
+        data: { podcast: nextPodcast, isLiked, isFavorited },
+      });
+    }
   }
-
-  if (!randomPodcast) {
-    return res.status(httpStatus.NOT_FOUND).json({
-      success: false,
-      message: "Random Podcast Not Found",
-    });
-  }
-
-  let isLiked = false,
-    isFavorited = false;
-  let like, favorite;
-
-  [error, like] = await to(Like.findOne({ podcast: randomPodcast._id, user: user.userId }));
-  if (error) return next(error);
-  if (like) isLiked = true;
-
-  [error, favorite] = await to(
-    Favorite.findOne({ podcasts: randomPodcast._id, user: user.userId }),
-  );
-  if (error) return next(error);
-  if (favorite) isFavorited = true;
 
   return res.status(httpStatus.OK).json({
     success: true,
-    message: "Success",
-    data: {
-      podcast: randomPodcast,
-      isLiked,
-      isFavorited,
-    },
+    message: "No Podcast Found",
+    data: {},
   });
 };
 

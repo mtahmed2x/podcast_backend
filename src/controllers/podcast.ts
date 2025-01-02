@@ -183,7 +183,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
     pagination: {
       page,
       limit,
-      total: await Podcast.countDocuments(), // Total number of documents
+      total: await Podcast.countDocuments(),
     },
   });
 };

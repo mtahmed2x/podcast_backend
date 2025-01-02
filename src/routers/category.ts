@@ -1,7 +1,6 @@
 import express from "express";
 import CategoryController from "@controllers/category";
 import { authorize, isAdmin } from "@middlewares/authorization";
-import { ParamValidator } from "@middlewares/validation";
 import { handleFileUpload } from "@middlewares/uploadFile";
 
 const CategoryRouter = express.Router();
@@ -13,17 +12,17 @@ CategoryRouter.put(
   "/update/:id",
   authorize,
   isAdmin,
-  ParamValidator,
+
   handleFileUpload,
   CategoryController.update,
 );
-CategoryRouter.delete("/delete/:id", authorize, isAdmin, ParamValidator, CategoryController.remove);
+CategoryRouter.delete("/delete/:id", authorize, isAdmin, CategoryController.remove);
 CategoryRouter.get(
   "/:id/sub-categories",
   authorize,
-  ParamValidator,
+
   CategoryController.getSubCategories,
 );
-CategoryRouter.get("/:id/podcasts", authorize, ParamValidator, CategoryController.getPodcasts);
+CategoryRouter.get("/:id/podcasts", authorize, CategoryController.getPodcasts);
 
 export default CategoryRouter;

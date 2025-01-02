@@ -45,37 +45,46 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
   session.startTransaction();
 
   try {
-    [error, auth] = await to(Auth.create({
-      email,
-      password: hashedPassword,
-      role,
-      verificationOTP: verificationOTP,
-      verificationOTPExpire,
-    }));
-    if(error) throw error;
+    [error, auth] = await to(
+      Auth.create({
+        email,
+        password: hashedPassword,
+        role,
+        isApproved: role === Role.USER,
+        verificationOTP: verificationOTP,
+        verificationOTPExpire,
+      }),
+    );
+    if (error) throw error;
 
-    [error, user] = await to(User.create({
-      auth: auth!._id,
-      name: name,
-      dateOfBirth: dateOfBirth,
-      address: address,
-    }));
-    if(error) throw error;
+    [error, user] = await to(
+      User.create({
+        auth: auth!._id,
+        name: name,
+        dateOfBirth: dateOfBirth,
+        address: address,
+      }),
+    );
+    if (error) throw error;
 
     if (role === "CREATOR" || role === "ADMIN") {
-      [error, creator] = await to(Creator.create({
-        auth: auth._id,
-        user: user._id,
-      }));
-      if(error) throw error;
+      [error, creator] = await to(
+        Creator.create({
+          auth: auth._id,
+          user: user._id,
+        }),
+      );
+      if (error) throw error;
     }
 
     if (role === "ADMIN") {
-      [error, admin] = await to(Admin.create({
-        auth: auth._id,
-        user: user._id,
-        creator: creator!._id,
-      }));
+      [error, admin] = await to(
+        Admin.create({
+          auth: auth._id,
+          user: user._id,
+          creator: creator!._id,
+        }),
+      );
     }
 
     await sendEmail(email, verificationOTP);
