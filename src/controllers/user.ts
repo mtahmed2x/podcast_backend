@@ -22,30 +22,32 @@ type AvatarFiles = Express.Request & {
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { userId } = req.user;
   const { name, dateOfBirth, gender, contact, address } = req.body;
-  let avatar;
-  if ((req as AvatarFiles).files) {
-    avatar = (req as AvatarFiles).files.avatar;
-  }
+  console.log(req.body.avatarUrl);
+  
+  // let avatar;
+  // if ((req as AvatarFiles).files) {
+  //   avatar = (req as AvatarFiles).files.avatar;
+  // }
 
-  let error, user;
-  [error, user] = await to(User.findOne({ _id: userId }));
-  if (error) return next(error);
-  if (!user) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
+  // let error, user;
+  // [error, user] = await to(User.findOne({ _id: userId }));
+  // if (error) return next(error);
+  // if (!user) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
 
-  const updateFields: Partial<UserSchema> = {};
-  if (name) updateFields.name = name;
-  if (dateOfBirth) updateFields.dateOfBirth = dateOfBirth;
-  if (gender) updateFields.gender = gender;
-  if (contact) updateFields.contact = contact;
-  if (address) updateFields.address = address;
-  if (avatar) updateFields.avatar = avatar[0].path;
+  // const updateFields: Partial<UserSchema> = {};
+  // if (name) updateFields.name = name;
+  // if (dateOfBirth) updateFields.dateOfBirth = dateOfBirth;
+  // if (gender) updateFields.gender = gender;
+  // if (contact) updateFields.contact = contact;
+  // if (address) updateFields.address = address;
+  // if (avatar) updateFields.avatar = avatar[0].path;
 
-  if (Object.keys(updateFields).length === 0)
-    return next(createError(httpStatus.BAD_REQUEST, "No field to update"));
+  // if (Object.keys(updateFields).length === 0)
+  //   return next(createError(httpStatus.BAD_REQUEST, "No field to update"));
 
-  [error, user] = await to(User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true }));
-  if (error) return next(error);
-  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: user });
+  // [error, user] = await to(User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true }));
+  // if (error) return next(error);
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: {} });
 };
 
 const updateLocation = async (req: Request, res: Response, next: NextFunction): Promise<any> => {

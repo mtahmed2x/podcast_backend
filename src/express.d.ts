@@ -8,8 +8,7 @@ declare global {
   namespace Express {
     interface Request {
       user: DecodedUser;
-      category: CategoryDocument;
-      subCategory: SubCategoryDocument;
+      files?: fileUpload.FileArray | null | undefined;
     }
   }
 }

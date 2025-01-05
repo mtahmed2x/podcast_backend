@@ -13,6 +13,7 @@ import Creator from "@models/creator";
 import mongoose from "mongoose";
 import httpStatus from "http-status";
 import createError from "http-errors";
+import Cloudinary from "@shared/cloudinary";
 
 type PodcastFiles = Express.Request & {
   files: { [fieldname: string]: Express.Multer.File[] };
@@ -25,8 +26,7 @@ cloudinary.config({
 });
 
 const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { categoryId, subCategoryId, title, description, location } = req.body;
-  const { audio, cover } = (req as any).files;
+  const { categoryId, subCategoryId, title, description, location, coverUrl, podcastAudioUrl } = req.body;
   const creatorId = req.user.creatorId;
 
   let error, category, subCategory;
@@ -39,24 +39,8 @@ const create = async (req: Request, res: Response, next: NextFunction): Promise<
   if (error) return next(error);
   if (!subCategory) return next(createError(httpStatus.NOT_FOUND, "SubCategory Not Found"));
 
-  const audioLocalPath = audio[0].path;
-  const coverPath = cover[0].path;
-
-  let audioCloudinaryUrl: string;
-
-  try {
-    const cloudinaryResponse = await cloudinary.uploader.upload(audioLocalPath, {
-      resource_type: "video",
-      folder: "uploads/podcast/audio",
-    });
-    audioCloudinaryUrl = cloudinaryResponse.secure_url;
-  } catch (uploadError) {
-    console.error("Cloudinary upload error:", uploadError);
-    return next(createError(httpStatus.INTERNAL_SERVER_ERROR, "Audio upload to Cloudinary failed"));
-  }
-
-  const audioMetadata = await getAudioMetadata(audioCloudinaryUrl);
-  const imageMetadata = await getImageMetadata(coverPath);
+  const audioMetadata = await getAudioMetadata(podcastAudioUrl);
+  const imageMetadata = await getImageMetadata(coverUrl);
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -69,10 +53,10 @@ const create = async (req: Request, res: Response, next: NextFunction): Promise<
       title,
       description,
       location,
-      cover: coverPath,
+      cover: coverUrl,
       coverFormat: imageMetadata.format,
       coverSize: imageMetadata.size,
-      audio: audioCloudinaryUrl,
+      audio: podcastAudioUrl,
       audioFormat: audioMetadata.format,
       audioSize: audioMetadata.size,
       audioDuration: audioMetadata.duration,
@@ -189,41 +173,45 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
 };
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { categoryId, subCategoryId, title, description, location } = req.body;
-  const { cover } = (req as PodcastFiles).files;
+  const { categoryId, subCategoryId, title, description, location, coverUrl, podcastAudioUrl } = req.body;
   let error, podcast;
-  const { id } = req.params;
+  const id = req.params.id;
 
-  const updateFields: {
-    category?: string;
-    subCategory?: string;
-    title?: string;
-    description?: string;
-    location?: string;
-    cover?: string;
-  } = {};
+  [error, podcast] = await to(Podcast.findById(id));
+  if(error) return next(error);
+  if(!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not found"));
 
   if (categoryId) {
     let category;
     [error, category] = await to(Category.findById(categoryId));
     if (error) return next(error);
     if (!category) return next(createError(httpStatus.NOT_FOUND, "Category not found!"));
-    updateFields.category = categoryId;
+    podcast.category = categoryId;
   }
   if (subCategoryId) {
     let subCategory;
     [error, subCategory] = await to(SubCategory.findById(subCategoryId));
     if (error) return next(error);
     if (!subCategory) return next(createError(httpStatus.NOT_FOUND, "subCategory not found!"));
-    updateFields.subCategory = subCategoryId;
+    podcast.subCategory = subCategoryId;
   }
-  if (title) updateFields.title = title;
-  if (description) updateFields.description = description;
-  if (location) updateFields.location = location;
-  if (cover) updateFields.cover = cover[0].path;
+  podcast.title = title || podcast.title;
+  podcast.description = description || podcast.description;
+  podcast.location = location || podcast.location;
+  
+  if(coverUrl) {
+    Cloudinary.remove(podcast.cover!);
+    podcast.cover = coverUrl;
+  }
 
-  [error, podcast] = await to(Podcast.findByIdAndUpdate(id, { $set: updateFields }, { new: true }));
+  if(podcastAudioUrl) {
+    Cloudinary.remove(podcast.audio);
+    podcast.audio = podcastAudioUrl;
+  }
+
+  [error] = await to(podcast.save());
   if (error) return next(error);
+  
   res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcast });
 };
 
