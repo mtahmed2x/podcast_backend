@@ -1,34 +1,46 @@
 import Cloudinary from "@shared/cloudinary";
 import { NextFunction, Request, Response } from "express";
 import { UploadedFile } from "express-fileupload";
+import createError from "http-errors";
+import httpStatus from "http-status";
 
-export const fileHandler = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  if(req.files && req.files.avatar) {
-    const avatar = req.files.avatar as UploadedFile;
-    const avatarUrl = await Cloudinary.upload(avatar, "profile");
-    req.body.avatarUrl = avatarUrl;
+const uploadFileToCloudinary = async (
+  file: UploadedFile,
+  folder: string
+): Promise<string> => {
+  try {
+    return await Cloudinary.upload(file, folder);
+  } catch (error: any) {
+    throw new Error(`Failed to upload ${folder} file: ${error.message}`);
   }
-  if(req.files && req.files.categoryImage) {
-    const categoryImage = req.files.categoryImage as UploadedFile;
-    const categoryImageUrl = await Cloudinary.upload(categoryImage, "category");
-    req.body.categoryImageUrl = categoryImageUrl;
+};
+
+export const fileHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const fileFields = [
+      { fieldName: "avatar", folder: "profile", key: "avatarUrl" },
+      { fieldName: "categoryImage", folder: "category", key: "categoryImageUrl" },
+      { fieldName: "subcategoryImage", folder: "subcategory", key: "subcategoryImageUrl" },
+      { fieldName: "cover", folder: "cover", key: "coverUrl" },
+      { fieldName: "audio", folder: "audio", key: "podcastAudioUrl" },
+    ];
+
+    if (req.files) {
+      await Promise.all(
+        fileFields.map(async ({ fieldName, folder, key }) => {
+          const file = req.files[fieldName] as UploadedFile | undefined;
+          if (file) {
+            const fileUrl = await uploadFileToCloudinary(file, folder);
+            req.body[key] = fileUrl;
+          }
+        })
+      );
+    }
+
+    next();
+  } catch (error: any) {
+    next(createError(httpStatus.BAD_REQUEST, error.message));
   }
-  if(req.files && req.files.subcategoryImage) {
-    const subcategoryImage = req.files.subcategoryImage as UploadedFile;
-    const subcategoryImageUrl = await Cloudinary.upload(subcategoryImage, "subcategory");
-    req.body.subcategoryImageUrl = subcategoryImageUrl;
-  }
-  if(req.files && req.files.coverImage) {
-    const coverImage = req.files.cover as UploadedFile;
-    const coverUrl = await Cloudinary.upload(coverImage, "cover");
-    req.body.coverUrl = coverUrl; 
-  }
-  if(req.files && req.files.podcastAudio) {
-    const podcastAudio = req.files.podcastAudio as UploadedFile;
-    const podcastAudioUrl = await Cloudinary.upload(podcastAudio, "podcastAudio");
-    req.body.podcastAudioUrl = podcastAudioUrl;
-  }
-  next();
 };
 
 export default fileHandler;

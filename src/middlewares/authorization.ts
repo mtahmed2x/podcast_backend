@@ -12,6 +12,8 @@ import { Role } from "@shared/enums";
 import { decodeToken } from "@utils/jwt";
 import { DecodedUser } from "@schemas/decodedUser";
 
+import httpStatus from "http-status";
+
 export const getUserInfo = async (
   authId: string,
 ): Promise<DecodedUser | null> => {
@@ -59,13 +61,13 @@ const hasAccess = (roles: Role[]) => {
           "Access Denied. You don't have sufficient permission",
         ),
       );
-    if (!user.isApproved)
-      return next(
-        createError(
-          httpStatus.FORBIDDEN,
-          "Access Denied. Wait for Admin's approval.",
-        ),
-      );
+    // if (!user.isApproved)
+    //   return next(
+    //     createError(
+    //       httpStatus.FORBIDDEN,
+    //       "Access Denied. Wait for Admin's approval.",
+    //     ),
+    //   );
     if (user.isBlocked)
       return next(
         createError(

@@ -1,6 +1,7 @@
 import Auth from "@models/auth";
 import to from "await-to-ts";
 import { Request, Response, NextFunction } from "express";
+import httpStatus from "http-status";
 
 const approve = async (
   req: Request,
