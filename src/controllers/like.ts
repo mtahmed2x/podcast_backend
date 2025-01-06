@@ -7,7 +7,7 @@ import { Subject } from "@shared/enums";
 import Podcast from "@models/podcast";
 import createError from "http-errors";
 import httpStatus from "http-status";
-import { addNotification } from "src/services/notification";
+import { addNotification } from "@services/notification";
 import Creator from "@models/creator";
 import { Types } from "mongoose";
 

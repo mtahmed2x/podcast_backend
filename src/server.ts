@@ -1,10 +1,8 @@
 import http from "http";
 import app from "./app";
 import { connectDB } from "@connection/atlasDB";
-
 import "dotenv/config";
 import { logger } from "@shared/logger";
-const server = http.createServer(app);
 
 const PORT = process.env.PORT || 8000;
 async function startServer() {

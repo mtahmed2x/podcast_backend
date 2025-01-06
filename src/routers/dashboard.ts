@@ -1,6 +1,6 @@
 import express from "express";
 import DashboardController from "@controllers/dashboard";
-import AdminServices from "src/services/admin";
+import AdminServices from "@services/admin";
 import { authorize, isAdmin } from "@middlewares/authorization";
 
 const router = express.Router();

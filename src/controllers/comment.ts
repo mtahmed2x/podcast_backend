@@ -8,7 +8,7 @@ import Podcast from "@models/podcast";
 import createError from "http-errors";
 import httpStatus from "http-status";
 import { populate } from "dotenv";
-import { addNotification } from "src/services/notification";
+import { addNotification } from "@services/notification";
 import Creator from "@models/creator";
 import { Types } from "mongoose";
 

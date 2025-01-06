@@ -18,7 +18,8 @@
       "@shared/*": ["src/shared/*"],
       "@validator/*": ["src/validator/*"],
       "@utils/*": ["src/utils/*"],
-      "@schemas/*": ["src/schemas/*"]
+      "@schemas/*": ["src/schemas/*"],
+      "@services/*": ["src/services/*"]
     }
   },
   "include": ["src/**/*.ts"],

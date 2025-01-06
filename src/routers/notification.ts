@@ -1,7 +1,7 @@
 import { authorize } from "@middlewares/authorization";
 import express from "express";
 
-import NotificationServices from "src/services/notification";
+import NotificationServices from "@services/notification";
 
 const router = express.Router();
 
