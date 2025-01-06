@@ -101,16 +101,12 @@ export const searchPodcasts = async (
   res: Response,
   next: NextFunction,
 ): Promise<any> => {
-  const { query } = req.query;
+  const query = typeof req.query.query === "string" ? req.query.query.trim() : "all";
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.max(1, Number(req.query.limit) || 10);
   const skip = (page - 1) * limit;
 
-  if (!query || typeof query !== "string") {
-    return next(createError(httpStatus.BAD_REQUEST, "Invalid query parameter"));
-  }
-
-  const isShowAll = query.trim().toLowerCase() === "all";
+  const isShowAll = query.toLowerCase() === "all";
   const regex = isShowAll ? null : new RegExp(query, "i");
 
   try {
