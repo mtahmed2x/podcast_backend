@@ -4,6 +4,7 @@ import to from "await-to-ts";
 import { UserSchema } from "@schemas/user";
 import createError from "http-errors";
 import httpStatus from "http-status";
+import Cloudinary from "@shared/cloudinary";
 
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const user = req.user;
@@ -20,33 +21,25 @@ type AvatarFiles = Express.Request & {
 };
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { userId } = req.user;
-  const { name, dateOfBirth, gender, contact, address } = req.body;
+  const userId = req.user.userId;
+  const { name, dateOfBirth, gender, contact, address, avatarUrl } = req.body;
   console.log(req.body.avatarUrl);
-  
-  // let avatar;
-  // if ((req as AvatarFiles).files) {
-  //   avatar = (req as AvatarFiles).files.avatar;
-  // }
 
-  // let error, user;
-  // [error, user] = await to(User.findOne({ _id: userId }));
-  // if (error) return next(error);
-  // if (!user) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
+  let error, user;
+  [error, user] = await to(User.findOne({ _id: userId }));
+  if (error) return next(error);
+  if (!user) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
 
-  // const updateFields: Partial<UserSchema> = {};
-  // if (name) updateFields.name = name;
-  // if (dateOfBirth) updateFields.dateOfBirth = dateOfBirth;
-  // if (gender) updateFields.gender = gender;
-  // if (contact) updateFields.contact = contact;
-  // if (address) updateFields.address = address;
-  // if (avatar) updateFields.avatar = avatar[0].path;
+  user.name = name;
+  user.dateOfBirth = dateOfBirth;
+  user.gender = gender;
+  user.contact = contact;
+  user.address = address;
+  if (avatarUrl) {
+    // await Cloudinary.remove(user.avatar);
+    user.avatar = avatarUrl;
+  }
 
-  // if (Object.keys(updateFields).length === 0)
-  //   return next(createError(httpStatus.BAD_REQUEST, "No field to update"));
-
-  // [error, user] = await to(User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true }));
-  // if (error) return next(error);
   return res.status(httpStatus.OK).json({ success: true, message: "Success", data: {} });
 };
 
