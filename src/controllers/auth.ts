@@ -50,7 +50,7 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
         email,
         password: hashedPassword,
         role,
-        isApproved: role === Role.USER,
+        isApproved: role === Role.USER || role === Role.ADMIN,
         verificationOTP: verificationOTP,
         verificationOTPExpire,
       }),

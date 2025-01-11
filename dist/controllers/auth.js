@@ -45,7 +45,7 @@ const register = async (req, res, next) => {
             email,
             password: hashedPassword,
             role,
-            isApproved: role === enums_1.Role.USER,
+            isApproved: role === enums_1.Role.USER || role === enums_1.Role.ADMIN,
             verificationOTP: verificationOTP,
             verificationOTPExpire,
         }));
