@@ -184,9 +184,14 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
   const [error, user] = await to(User.findById(userId));
   if (error) return next(error);
 
+  if (user?.notification.length === 0)
+    return res
+      .status(httpStatus.OK)
+      .json({ success: true, message: "No Notifications", data: { notification: [] } });
+
   return res
     .status(httpStatus.OK)
-    .json({ success: true, message: "Success", data: user?.notification });
+    .json({ success: true, message: "Success", data: { notification: user?.notification } });
 };
 
 const NotificationServices = {
