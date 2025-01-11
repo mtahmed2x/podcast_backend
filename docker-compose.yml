@@ -1,4 +1,4 @@
-sservices:
+services:
   app:
     build: .
     container_name: podcast_backend
@@ -9,5 +9,3 @@ sservices:
       - SERVICE_NAME=Radio Preach
     env_file:
       - .env
-    networks:
-      - podcast_network
