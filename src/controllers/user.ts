@@ -16,10 +16,6 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
   return res.status(httpStatus.OK).json({ success: true, message: "Success", data: profile });
 };
 
-type AvatarFiles = Express.Request & {
-  files: { [fieldname: string]: Express.Multer.File[] };
-};
-
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const userId = req.user.userId;
   const { name, dateOfBirth, gender, contact, address, avatarUrl } = req.body;

@@ -3,4 +3,3 @@ dist
 Dockerfile
 pnpm-debug.log
 .dockerignore
-.env
