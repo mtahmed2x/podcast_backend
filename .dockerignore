@@ -1,5 +1,3 @@
 node_modules
-dist
-Dockerfile
 pnpm-debug.log
-.dockerignore
+logs
