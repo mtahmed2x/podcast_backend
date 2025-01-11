@@ -26,17 +26,20 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   if (error) return next(error);
   if (!user) return next(createError(httpStatus.NOT_FOUND, "Account Not Found"));
 
-  user.name = name;
-  user.dateOfBirth = dateOfBirth;
-  user.gender = gender;
-  user.contact = contact;
-  user.address = address;
+  user.name = name || user.name;
+  user.dateOfBirth = dateOfBirth || user.dateOfBirth;
+  user.gender = gender || user.gender;
+  user.contact = contact || user.contact;
+  user.address = address || user.address;
   if (avatarUrl) {
     // await Cloudinary.remove(user.avatar);
     user.avatar = avatarUrl;
   }
 
-  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: {} });
+  [error] = await to(user.save());
+  if (error) return next(error);
+
+  return res.status(httpStatus.OK).json({ success: true, message: "Success", data: user });
 };
 
 const updateLocation = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
