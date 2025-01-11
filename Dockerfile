@@ -1,13 +1,15 @@
-FROM node:22
+FROM node:23.4.0
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 
-RUN npm install
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
 COPY . .
 
-EXPOSE 8080
+RUN pnpm build
 
-CMD [ "npm", "start" ]
+EXPOSE 8000
+
+CMD ["pnpm", "start"]

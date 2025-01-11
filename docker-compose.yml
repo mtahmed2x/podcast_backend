@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    container_name: podcast_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVICE_NAME=Radio Preach
+    env_file:
+      - .env
+    networks:
+      - podcast_network
+
+networks:
+  podcast_network:
+    driver: bridge
