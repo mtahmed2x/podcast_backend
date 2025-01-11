@@ -1,21 +1,20 @@
 import express from "express";
 import PodcastController from "@controllers/podcast";
 import PodcastServices from "@services/podcast";
-import { authorize, isCreator } from "@middlewares/authorization";
-import { handleFileUpload } from "@middlewares/uploadFile";
+import { authorize } from "@middlewares/authorization";
 import fileUpload from "express-fileupload";
 import fileHandler from "@middlewares/fileHandler";
 
 const router = express.Router();
 
-router.post("/create", fileUpload(), fileHandler, PodcastController.create);
-router.get("/", PodcastController.getAll);
-router.get("/:id", PodcastController.get);
-router.put("/update/:id", authorize, handleFileUpload, PodcastController.update);
-router.delete("/delete/:id", PodcastController.remove);
+router.post("/create", fileUpload(), fileHandler, authorize, PodcastController.create);
+router.get("/", authorize, PodcastController.getAll);
+router.get("/:id", authorize, PodcastController.get);
+router.put("/update/:id", fileUpload(), fileHandler, authorize, PodcastController.update);
+router.delete("/delete/:id", authorize, PodcastController.remove);
 
-router.get("/popular", PodcastServices.popularPodcasts);
-router.get("/latest", PodcastServices.latestPodcasts);
+router.get("/popular", authorize, PodcastServices.popularPodcasts);
+router.get("/latest", authorize, PodcastServices.latestPodcasts);
 router.post("/play/:id", authorize, PodcastServices.play);
 router.post("/play-next/:id", authorize, PodcastServices.playNext);
 router.post("/report", authorize, PodcastServices.reportPodcast);
