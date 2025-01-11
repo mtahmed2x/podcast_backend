@@ -121,9 +121,13 @@ const getPodcasts = async (req, res, next) => {
     if (!subCategories)
         return next((0, http_errors_1.default)(http_status_1.default.NOT_FOUND, "SubCategories not found"));
     if (!subCategories.podcasts || subCategories.podcasts.length === 0) {
-        return res
-            .status(http_status_1.default.OK)
-            .json({ success: true, message: "No Podcasts Found!", data: [] });
+        return res.status(http_status_1.default.OK).json({
+            success: true,
+            message: "No Podcasts Found!",
+            data: {
+                podcasts: [],
+            },
+        });
     }
     const totalPodcasts = subCategories.podcasts.length;
     const paginatedPodcasts = subCategories.podcasts.slice((page - 1) * limit, page * limit);
