@@ -2,18 +2,27 @@ import express from "express";
 import CategoryController from "@controllers/category";
 import { authorize, isAdmin } from "@middlewares/authorization";
 import { handleFileUpload } from "@middlewares/uploadFile";
+import fileUpload from "express-fileupload";
+import fileHandler from "@middlewares/fileHandler";
 
 const CategoryRouter = express.Router();
 
-CategoryRouter.post("/create", authorize, isAdmin, handleFileUpload, CategoryController.create);
+CategoryRouter.post(
+  "/create",
+  fileUpload(),
+  fileHandler,
+  authorize,
+  isAdmin,
+  CategoryController.create,
+);
 CategoryRouter.get("/", authorize, CategoryController.getAll);
 CategoryRouter.get("/:id", authorize, CategoryController.get);
 CategoryRouter.put(
   "/update/:id",
+  fileUpload(),
+  fileHandler,
   authorize,
   isAdmin,
-
-  handleFileUpload,
   CategoryController.update,
 );
 CategoryRouter.delete("/delete/:id", authorize, isAdmin, CategoryController.remove);
