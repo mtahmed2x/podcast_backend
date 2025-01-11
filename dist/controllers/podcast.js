@@ -187,11 +187,11 @@ const update = async (req, res, next) => {
     podcast.description = description || podcast.description;
     podcast.location = location || podcast.location;
     if (coverUrl) {
-        cloudinary_2.default.remove(podcast.cover);
+        await cloudinary_2.default.remove(podcast.cover);
         podcast.cover = coverUrl;
     }
     if (podcastAudioUrl) {
-        cloudinary_2.default.remove(podcast.audio);
+        await cloudinary_2.default.remove(podcast.audio);
         podcast.audio = podcastAudioUrl;
     }
     [error] = await (0, await_to_ts_1.default)(podcast.save());

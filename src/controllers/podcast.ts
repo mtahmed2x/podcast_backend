@@ -26,7 +26,8 @@ cloudinary.config({
 });
 
 const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { categoryId, subCategoryId, title, description, location, coverUrl, podcastAudioUrl } = req.body;
+  const { categoryId, subCategoryId, title, description, location, coverUrl, podcastAudioUrl } =
+    req.body;
   const creatorId = req.user.creatorId;
 
   let error, category, subCategory;
@@ -173,13 +174,14 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
 };
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { categoryId, subCategoryId, title, description, location, coverUrl, podcastAudioUrl } = req.body;
+  const { categoryId, subCategoryId, title, description, location, coverUrl, podcastAudioUrl } =
+    req.body;
   let error, podcast;
   const id = req.params.id;
 
   [error, podcast] = await to(Podcast.findById(id));
-  if(error) return next(error);
-  if(!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not found"));
+  if (error) return next(error);
+  if (!podcast) return next(createError(httpStatus.NOT_FOUND, "Podcast Not found"));
 
   if (categoryId) {
     let category;
@@ -198,20 +200,20 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   podcast.title = title || podcast.title;
   podcast.description = description || podcast.description;
   podcast.location = location || podcast.location;
-  
-  if(coverUrl) {
-    Cloudinary.remove(podcast.cover!);
+
+  if (coverUrl) {
+    await Cloudinary.remove(podcast.cover!);
     podcast.cover = coverUrl;
   }
 
-  if(podcastAudioUrl) {
-    Cloudinary.remove(podcast.audio);
+  if (podcastAudioUrl) {
+    await Cloudinary.remove(podcast.audio);
     podcast.audio = podcastAudioUrl;
   }
 
   [error] = await to(podcast.save());
   if (error) return next(error);
-  
+
   res.status(httpStatus.OK).json({ success: true, message: "Success", data: podcast });
 };
 
