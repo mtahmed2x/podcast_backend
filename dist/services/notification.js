@@ -155,9 +155,13 @@ const get = async (req, res, next) => {
     const [error, user] = await (0, await_to_ts_1.default)(user_1.default.findById(userId));
     if (error)
         return next(error);
+    if (user?.notification.length === 0)
+        return res
+            .status(http_status_1.default.OK)
+            .json({ success: true, message: "No Notifications", data: { notification: [] } });
     return res
         .status(http_status_1.default.OK)
-        .json({ success: true, message: "Success", data: user?.notification });
+        .json({ success: true, message: "Success", data: { notification: user?.notification } });
 };
 const NotificationServices = {
     get,
