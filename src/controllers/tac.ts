@@ -2,6 +2,7 @@ import TaC from "@models/tac";
 import to from "await-to-ts";
 import { Request, Response, NextFunction } from "express";
 import createError from "http-errors";
+import httpStatus from "http-status";
 
 const add = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { text } = req.body;
@@ -13,7 +14,10 @@ const add = async (req: Request, res: Response, next: NextFunction): Promise<any
 const get = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const [error, tac] = await to(TaC.findOne().lean());
   if (error) return next(error);
-  if (!tac) return res.status(httpStatus.OK).json({success: true, message: "No terms and conditions", data : {} });
+  if (!tac)
+    return res
+      .status(httpStatus.OK)
+      .json({ success: true, message: "No terms and conditions", data: {} });
   res.status(httpStatus.OK).json({ success: true, message: "Success", data: tac });
 };
 
