@@ -11,7 +11,6 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
   try {
     const location = req.user.locationPreference || null;
     const defaultAvatar = "uploads/default/default-avatar.png";
-    const creatorId = new Types.ObjectId(process.env.CREATORID);
 
     const formatAudioDuration = (duration: number): string => `${(duration / 60).toFixed(2)} min`;
 
@@ -19,6 +18,8 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
     const categoriesPromise = Category.find().select("title categoryImage").limit(4).lean();
 
     /* Admin */
+    const adminAccount = await Admin.findOne().lean();
+    const creatorId = adminAccount?.creator || new Types.ObjectId(process.env.CREATORID);
     const adminPromise = Podcast.aggregate([
       { $match: { creator: creatorId } },
       { $sort: { totalLikes: -1 } },
