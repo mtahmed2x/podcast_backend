@@ -26,7 +26,8 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
     About.findByIdAndUpdate(id, { $set: { text: text } }, { new: true }),
   );
   if (error) return next(error);
-  if (!about) return next(createError(httpStatus.NOT_FOUND, "About Us not found"));
+  if (!about)
+    return res.status(httpStatus.OK).json({ success: true, message: "No about us", data: {} });
   res.status(httpStatus.OK).json({ success: true, message: "Success", data: about });
 };
 
