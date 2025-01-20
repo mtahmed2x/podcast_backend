@@ -9,6 +9,7 @@ export type UserSchema = Document & {
   contact: string;
   address: string;
   avatar: string;
+  backgroundImage: string;
   locationPreference: string;
   notification: {
     subject: Subject;

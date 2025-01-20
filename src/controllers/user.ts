@@ -1,7 +1,6 @@
 import User from "@models/user";
 import { NextFunction, Request, Response } from "express";
 import to from "await-to-ts";
-import { UserSchema } from "@schemas/user";
 import createError from "http-errors";
 import httpStatus from "http-status";
 import Cloudinary from "@shared/cloudinary";
@@ -18,7 +17,7 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const userId = req.user.userId;
-  const { name, dateOfBirth, gender, contact, address, avatarUrl } = req.body;
+  const { name, dateOfBirth, gender, contact, address, avatarUrl, backgroundImageUrl } = req.body;
   console.log(req.body.avatarUrl);
 
   let error, user;
@@ -31,9 +30,20 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   user.gender = gender || user.gender;
   user.contact = contact || user.contact;
   user.address = address || user.address;
+  user.backgroundImage = backgroundImageUrl || user.backgroundImage;
+
   if (avatarUrl) {
-    // await Cloudinary.remove(user.avatar);
+    if (user.avatar !== null || user.avatar !== "") {
+      await Cloudinary.remove(user.avatar);
+    }
     user.avatar = avatarUrl;
+  }
+
+  if (backgroundImageUrl) {
+    if (user.backgroundImage !== null || user.backgroundImage !== "") {
+      await Cloudinary.remove(user.backgroundImage);
+    }
+    user.backgroundImage = backgroundImageUrl;
   }
 
   [error] = await to(user.save());

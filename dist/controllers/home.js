@@ -6,16 +6,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const category_1 = __importDefault(require("../models/category"));
 const http_status_1 = __importDefault(require("http-status"));
 const podcast_1 = __importDefault(require("../models/podcast"));
+const admin_1 = __importDefault(require("../models/admin"));
 const mongoose_1 = require("mongoose");
 const homeController = async (req, res, next) => {
     try {
         const location = req.user.locationPreference || null;
         const defaultAvatar = "uploads/default/default-avatar.png";
-        const creatorId = new mongoose_1.Types.ObjectId(process.env.CREATORID);
         const formatAudioDuration = (duration) => `${(duration / 60).toFixed(2)} min`;
         /* Categories */
         const categoriesPromise = category_1.default.find().select("title categoryImage").limit(4).lean();
         /* Admin */
+        const adminAccount = await admin_1.default.findOne().lean();
+        const creatorId = adminAccount?.creator || new mongoose_1.Types.ObjectId(process.env.CREATORID);
         const adminPromise = podcast_1.default.aggregate([
             { $match: { creator: creatorId } },
             { $sort: { totalLikes: -1 } },

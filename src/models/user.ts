@@ -20,11 +20,10 @@ const userSchema = new Schema<UserSchema>(
     gender: {
       type: String,
       enum: Gender,
-      default: null,
     },
     contact: {
       type: String,
-      default: null,
+      default: "",
     },
     address: {
       type: String,
@@ -32,7 +31,11 @@ const userSchema = new Schema<UserSchema>(
     },
     avatar: {
       type: String,
-      default: null,
+      default: "",
+    },
+    backgroundImage: {
+      type: String,
+      default: "",
     },
     notification: [
       {

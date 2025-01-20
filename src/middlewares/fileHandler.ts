@@ -4,10 +4,7 @@ import { UploadedFile } from "express-fileupload";
 import createError from "http-errors";
 import httpStatus from "http-status";
 
-const uploadFileToCloudinary = async (
-  file: UploadedFile,
-  folder: string
-): Promise<string> => {
+const uploadFileToCloudinary = async (file: UploadedFile, folder: string): Promise<string> => {
   try {
     return await Cloudinary.upload(file, folder);
   } catch (error: any) {
@@ -15,10 +12,15 @@ const uploadFileToCloudinary = async (
   }
 };
 
-export const fileHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const fileHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const fileFields = [
       { fieldName: "avatar", folder: "profile", key: "avatarUrl" },
+      { fieldName: "backgroundImage", folder: "profile", key: "backgroundImageUrl" },
       { fieldName: "categoryImage", folder: "category", key: "categoryImageUrl" },
       { fieldName: "subcategoryImage", folder: "subcategory", key: "subcategoryImageUrl" },
       { fieldName: "cover", folder: "cover", key: "coverUrl" },
@@ -33,7 +35,7 @@ export const fileHandler = async (req: Request, res: Response, next: NextFunctio
             const fileUrl = await uploadFileToCloudinary(file, folder);
             req.body[key] = fileUrl;
           }
-        })
+        }),
       );
     }
 
