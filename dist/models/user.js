@@ -19,11 +19,10 @@ const userSchema = new mongoose_1.Schema({
     gender: {
         type: String,
         enum: enums_1.Gender,
-        default: null,
     },
     contact: {
         type: String,
-        default: null,
+        default: "",
     },
     address: {
         type: String,
@@ -31,7 +30,11 @@ const userSchema = new mongoose_1.Schema({
     },
     avatar: {
         type: String,
-        default: null,
+        default: "",
+    },
+    backgroundImage: {
+        type: String,
+        default: "",
     },
     notification: [
         {

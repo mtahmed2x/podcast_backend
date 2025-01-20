@@ -7,6 +7,7 @@ const user_1 = __importDefault(require("../models/user"));
 const await_to_ts_1 = __importDefault(require("await-to-ts"));
 const http_errors_1 = __importDefault(require("http-errors"));
 const http_status_1 = __importDefault(require("http-status"));
+const cloudinary_1 = __importDefault(require("../shared/cloudinary"));
 const get = async (req, res, next) => {
     const user = req.user;
     let error, profile;
@@ -20,7 +21,7 @@ const get = async (req, res, next) => {
 };
 const update = async (req, res, next) => {
     const userId = req.user.userId;
-    const { name, dateOfBirth, gender, contact, address, avatarUrl } = req.body;
+    const { name, dateOfBirth, gender, contact, address, avatarUrl, backgroundImageUrl } = req.body;
     console.log(req.body.avatarUrl);
     let error, user;
     [error, user] = await (0, await_to_ts_1.default)(user_1.default.findOne({ _id: userId }));
@@ -33,9 +34,18 @@ const update = async (req, res, next) => {
     user.gender = gender || user.gender;
     user.contact = contact || user.contact;
     user.address = address || user.address;
+    user.backgroundImage = backgroundImageUrl || user.backgroundImage;
     if (avatarUrl) {
-        // await Cloudinary.remove(user.avatar);
+        if (user.avatar !== null || user.avatar !== "") {
+            await cloudinary_1.default.remove(user.avatar);
+        }
         user.avatar = avatarUrl;
+    }
+    if (backgroundImageUrl) {
+        if (user.backgroundImage !== null || user.backgroundImage !== "") {
+            await cloudinary_1.default.remove(user.backgroundImage);
+        }
+        user.backgroundImage = backgroundImageUrl;
     }
     [error] = await (0, await_to_ts_1.default)(user.save());
     if (error)
