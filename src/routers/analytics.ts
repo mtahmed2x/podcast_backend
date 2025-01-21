@@ -4,6 +4,6 @@ import getAnalyticsByYear from "@controllers/analytics";
 
 const router = express.Router();
 
-router.post("/:year", authorize, isAdmin, getAnalyticsByYear);
+router.get("/:year", authorize, isAdmin, getAnalyticsByYear);
 
 export default router;
