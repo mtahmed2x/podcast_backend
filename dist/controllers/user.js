@@ -22,7 +22,6 @@ const get = async (req, res, next) => {
 const update = async (req, res, next) => {
     const userId = req.user.userId;
     const { name, dateOfBirth, gender, contact, address, avatarUrl, backgroundImageUrl } = req.body;
-    console.log(req.body.avatarUrl);
     let error, user;
     [error, user] = await (0, await_to_ts_1.default)(user_1.default.findOne({ _id: userId }));
     if (error)
@@ -35,14 +34,15 @@ const update = async (req, res, next) => {
     user.contact = contact || user.contact;
     user.address = address || user.address;
     user.backgroundImage = backgroundImageUrl || user.backgroundImage;
+    console.log(user);
     if (avatarUrl) {
-        if (user.avatar !== null || user.avatar !== "") {
+        if (user.avatar !== null && user.avatar !== "") {
             await cloudinary_1.default.remove(user.avatar);
         }
         user.avatar = avatarUrl;
     }
     if (backgroundImageUrl) {
-        if (user.backgroundImage !== null || user.backgroundImage !== "") {
+        if (user.backgroundImage !== null && user.backgroundImage !== "") {
             await cloudinary_1.default.remove(user.backgroundImage);
         }
         user.backgroundImage = backgroundImageUrl;

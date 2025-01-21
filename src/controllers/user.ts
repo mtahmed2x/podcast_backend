@@ -18,7 +18,6 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const userId = req.user.userId;
   const { name, dateOfBirth, gender, contact, address, avatarUrl, backgroundImageUrl } = req.body;
-  console.log(req.body.avatarUrl);
 
   let error, user;
   [error, user] = await to(User.findOne({ _id: userId }));
@@ -32,15 +31,17 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   user.address = address || user.address;
   user.backgroundImage = backgroundImageUrl || user.backgroundImage;
 
+  console.log(user);
+
   if (avatarUrl) {
-    if (user.avatar !== null || user.avatar !== "") {
+    if (user.avatar !== null && user.avatar !== "") {
       await Cloudinary.remove(user.avatar);
     }
     user.avatar = avatarUrl;
   }
 
   if (backgroundImageUrl) {
-    if (user.backgroundImage !== null || user.backgroundImage !== "") {
+    if (user.backgroundImage !== null && user.backgroundImage !== "") {
       await Cloudinary.remove(user.backgroundImage);
     }
     user.backgroundImage = backgroundImageUrl;
