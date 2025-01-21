@@ -73,6 +73,7 @@ const webhook = async (req: Request, res: Response, next: NextFunction): Promise
         if (error) logger.error(error);
       }
       break;
+
     case "invoice_payment_failed":
       invoice = event.data.object;
       subscriptionId = invoice.subscription;
