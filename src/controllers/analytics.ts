@@ -8,7 +8,7 @@ const getAnalyticsByYear = async (
   res: Response,
   next: NextFunction,
 ): Promise<any> => {
-  const { year } = req.body;
+  const year = Number.parseInt(req.params.year);
 
   const allMonths = Object.values(Months);
 

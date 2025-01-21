@@ -7,7 +7,7 @@ const analytics_1 = __importDefault(require("../models/analytics"));
 const enums_1 = require("../shared/enums");
 const await_to_ts_1 = __importDefault(require("await-to-ts"));
 const getAnalyticsByYear = async (req, res, next) => {
-    const { year } = req.body;
+    const year = Number.parseInt(req.params.year);
     const allMonths = Object.values(enums_1.Months);
     const [error, analytics] = await (0, await_to_ts_1.default)(analytics_1.default.find({ year }));
     if (error)
