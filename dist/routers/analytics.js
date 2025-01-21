@@ -7,5 +7,5 @@ const express_1 = __importDefault(require("express"));
 const authorization_1 = require("../middlewares/authorization");
 const analytics_1 = __importDefault(require("../controllers/analytics"));
 const router = express_1.default.Router();
-router.post("/:year", authorization_1.authorize, authorization_1.isAdmin, analytics_1.default);
+router.get("/:year", authorization_1.authorize, authorization_1.isAdmin, analytics_1.default);
 exports.default = router;
