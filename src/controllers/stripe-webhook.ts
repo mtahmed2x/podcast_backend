@@ -5,6 +5,8 @@ import to from "await-to-ts";
 import Subscription from "@models/subscription";
 import httpStatus from "http-status";
 import { SubscriptionStatus } from "@shared/enums";
+import Analytics from "@models/analytics";
+import { logger } from "@shared/logger";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -40,6 +42,9 @@ const webhook = async (req: Request, res: Response, next: NextFunction): Promise
     case "invoice.payment_succeeded":
       invoice = event.data.object;
       subscriptionId = invoice.subscription;
+
+      let analytics;
+
       [error] = await to(
         Subscription.findOneAndUpdate(
           { stripeSubscriptionId: subscriptionId },
@@ -48,6 +53,25 @@ const webhook = async (req: Request, res: Response, next: NextFunction): Promise
         ),
       );
       if (error) return next(error);
+
+      const month = new Date().toLocaleDateString("en-US", { month: "short" });
+      const year = new Date().getFullYear();
+      const amountPaid = Number.parseFloat(invoice.amount_paid) * 100;
+
+      [error, analytics] = await to(Analytics.findOne({ month: month, year: year }));
+      if (error) logger.error(error);
+
+      if (!analytics) {
+        [error, analytics] = await to(
+          Analytics.create({ month: month, year: year, income: amountPaid, users: 1 }),
+        );
+        if (error) logger.error(error);
+      } else {
+        analytics.income += amountPaid;
+        analytics.users++;
+        [error] = await to(analytics.save());
+        if (error) logger.error(error);
+      }
       break;
     case "invoice_payment_failed":
       invoice = event.data.object;

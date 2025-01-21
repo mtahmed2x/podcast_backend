@@ -28,6 +28,7 @@ import SupportRouter from "@routers/support";
 import ReportRouter from "@routers/report";
 import DonationRouter from "@routers/donation";
 import NotificationRouter from "@routers/notification";
+import AnalyticsRouter from "@routers/analytics";
 /* Import End */
 
 const app = express();
@@ -70,6 +71,7 @@ app.use("/support", SupportRouter);
 app.use("/report", ReportRouter);
 app.use("/donation", DonationRouter);
 app.use("/notification", NotificationRouter);
+app.use("/analytics", AnalyticsRouter);
 
 /* Custom Router End */
 
