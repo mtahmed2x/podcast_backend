@@ -33,6 +33,7 @@ const support_1 = __importDefault(require("./routers/support"));
 const report_1 = __importDefault(require("./routers/report"));
 const donation_1 = __importDefault(require("./routers/donation"));
 const notification_1 = __importDefault(require("./routers/notification"));
+const analytics_1 = __importDefault(require("./routers/analytics"));
 /* Import End */
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -68,6 +69,7 @@ app.use("/support", support_1.default);
 app.use("/report", report_1.default);
 app.use("/donation", donation_1.default);
 app.use("/notification", notification_1.default);
+app.use("/analytics", analytics_1.default);
 /* Custom Router End */
 /* Default Routers */
 app.use(notfound_1.notFound);

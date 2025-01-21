@@ -9,6 +9,8 @@ const await_to_ts_1 = __importDefault(require("await-to-ts"));
 const subscription_1 = __importDefault(require("../models/subscription"));
 const http_status_1 = __importDefault(require("http-status"));
 const enums_1 = require("../shared/enums");
+const analytics_1 = __importDefault(require("../models/analytics"));
+const logger_1 = require("../shared/logger");
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY);
 const webhook = async (req, res, next) => {
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -45,9 +47,28 @@ const webhook = async (req, res, next) => {
         case "invoice.payment_succeeded":
             invoice = event.data.object;
             subscriptionId = invoice.subscription;
+            let analytics;
             [error] = await (0, await_to_ts_1.default)(subscription_1.default.findOneAndUpdate({ stripeSubscriptionId: subscriptionId }, { $set: { status: enums_1.SubscriptionStatus.ACTIVE } }, { new: true }));
             if (error)
                 return next(error);
+            const month = new Date().toLocaleDateString("en-US", { month: "short" });
+            const year = new Date().getFullYear();
+            const amountPaid = Number.parseFloat(invoice.amount_paid) * 100;
+            [error, analytics] = await (0, await_to_ts_1.default)(analytics_1.default.findOne({ month: month, year: year }));
+            if (error)
+                logger_1.logger.error(error);
+            if (!analytics) {
+                [error, analytics] = await (0, await_to_ts_1.default)(analytics_1.default.create({ month: month, year: year, income: amountPaid, users: 1 }));
+                if (error)
+                    logger_1.logger.error(error);
+            }
+            else {
+                analytics.income += amountPaid;
+                analytics.users++;
+                [error] = await (0, await_to_ts_1.default)(analytics.save());
+                if (error)
+                    logger_1.logger.error(error);
+            }
             break;
         case "invoice_payment_failed":
             invoice = event.data.object;

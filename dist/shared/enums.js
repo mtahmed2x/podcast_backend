@@ -1,12 +1,27 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SubscriptionStatus = exports.Gender = exports.Subject = exports.Role = void 0;
+exports.SubscriptionStatus = exports.Gender = exports.Subject = exports.Months = exports.Role = void 0;
 var Role;
 (function (Role) {
     Role["USER"] = "USER";
     Role["CREATOR"] = "CREATOR";
     Role["ADMIN"] = "ADMIN";
 })(Role || (exports.Role = Role = {}));
+var Months;
+(function (Months) {
+    Months["JAN"] = "JAN";
+    Months["FEB"] = "FEB";
+    Months["MAR"] = "MAR";
+    Months["APR"] = "APR";
+    Months["MAY"] = "MAY";
+    Months["JUN"] = "JUN";
+    Months["JUL"] = "JUL";
+    Months["AUG"] = "AUG";
+    Months["SEP"] = "SEP";
+    Months["OCT"] = "OCT";
+    Months["NOV"] = "NOV";
+    Months["DEC"] = "DEC";
+})(Months || (exports.Months = Months = {}));
 var Subject;
 (function (Subject) {
     Subject["LIKE"] = "LIKE";
