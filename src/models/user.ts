@@ -37,6 +37,10 @@ const userSchema = new Schema<UserSchema>(
       type: String,
       default: "",
     },
+    locationPreference: {
+      type: String,
+      default: "",
+    },
     notification: [
       {
         subject: {

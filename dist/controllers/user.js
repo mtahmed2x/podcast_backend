@@ -58,6 +58,7 @@ const updateLocation = async (req, res, next) => {
     const [error, user] = await (0, await_to_ts_1.default)(user_1.default.findByIdAndUpdate(userId, { $set: { locationPreference: location } }, { new: true }));
     if (error)
         return next(error);
+    console.log(user);
     return res
         .status(http_status_1.default.OK)
         .json({ success: true, message: "Success", data: user?.locationPreference });

@@ -60,6 +60,7 @@ const updateLocation = async (req: Request, res: Response, next: NextFunction): 
     User.findByIdAndUpdate(userId, { $set: { locationPreference: location } }, { new: true }),
   );
   if (error) return next(error);
+  console.log(user);
   return res
     .status(httpStatus.OK)
     .json({ success: true, message: "Success", data: user?.locationPreference });

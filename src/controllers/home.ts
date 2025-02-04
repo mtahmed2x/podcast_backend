@@ -9,7 +9,7 @@ import { Types } from "mongoose";
 
 const homeController = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const location = req.user.locationPreference || null;
+    const location = req.user.locationPreference;
     const defaultAvatar = "uploads/default/default-avatar.png";
 
     const formatAudioDuration = (duration: number): string => `${(duration / 60).toFixed(2)} min`;

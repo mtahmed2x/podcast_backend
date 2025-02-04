@@ -36,6 +36,10 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         default: "",
     },
+    locationPreference: {
+        type: String,
+        default: "",
+    },
     notification: [
         {
             subject: {

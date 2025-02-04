@@ -10,7 +10,7 @@ const admin_1 = __importDefault(require("../models/admin"));
 const mongoose_1 = require("mongoose");
 const homeController = async (req, res, next) => {
     try {
-        const location = req.user.locationPreference || null;
+        const location = req.user.locationPreference;
         const defaultAvatar = "uploads/default/default-avatar.png";
         const formatAudioDuration = (duration) => `${(duration / 60).toFixed(2)} min`;
         /* Categories */
