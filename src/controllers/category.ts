@@ -69,7 +69,7 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   const title = req.body.title;
   const categoryImageUrl = req.body.categoryImageUrl;
 
-  if(!title || !categoryImageUrl) {
+  if(!title && !categoryImageUrl) {
     return next(createError(httpStatus.BAD_REQUEST, "Nothing to update"));
   }
   
