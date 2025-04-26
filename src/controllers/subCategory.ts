@@ -11,14 +11,14 @@ import Cloudinary from "@shared/cloudinary";
 
 const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   let error, category, subCategory;
-  const { categoryId, title, subcategoryImageUrl } = req.body;
+  const { categoryId, title, subCategoryImageUrl } = req.body;
 
   [error, category] = await to(Category.findById(categoryId));
   if (error) return next(error);
   if (!category) return next(createError(httpStatus.NOT_FOUND, "Category not found!"));
 
   [error, subCategory] = await to(
-    SubCategory.create({ title: title, subCategoryImage: subcategoryImageUrl }),
+    SubCategory.create({ title: title, subCategoryImage: subCategoryImageUrl }),
   );
   if (error) return next(error);
 
