@@ -56,7 +56,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
   const { title, subcategoryImageUrl } = req.body;
-  if (!title || !subcategoryImageUrl) {
+  if (!title && !subcategoryImageUrl) {
     return next(createError(httpStatus.BAD_REQUEST, "Nothing to update"));
   }
 
