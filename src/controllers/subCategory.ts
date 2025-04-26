@@ -55,8 +55,8 @@ const getAll = async (req: Request, res: Response, next: NextFunction): Promise<
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
-  const { title, subcategoryImageUrl } = req.body;
-  if (!title && !subcategoryImageUrl) {
+  const { title, subCategoryImageUrl } = req.body;
+  if (!title && !subCategoryImageUrl) {
     return next(createError(httpStatus.BAD_REQUEST, "Nothing to update"));
   }
 
@@ -66,9 +66,9 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   if (!subCategory) return next(createError(httpStatus.NOT_FOUND, "SubCategory not found"));
 
   subCategory.title = title || subCategory.title;
-  if (subcategoryImageUrl) {
+  if (subCategoryImageUrl) {
     Cloudinary.remove(subCategory.subCategoryImage);
-    subCategory.subCategoryImage = subcategoryImageUrl;
+    subCategory.subCategoryImage = subCategoryImageUrl;
   }
 
   [error] = await to(subCategory.save());

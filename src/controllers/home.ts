@@ -6,6 +6,7 @@ import httpStatus from "http-status";
 import Podcast from "@models/podcast";
 import Admin from "@models/admin";
 import { Types } from "mongoose";
+import LiveStream from "@models/liveStream";
 
 const homeController = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
@@ -140,6 +141,8 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
         audioDuration: formatAudioDuration(podcast.audioDuration),
       }));
 
+    const liveStreams = await LiveStream.find().populate("user").limit(10);
+
     return res.status(httpStatus.OK).json({
       success: true,
       message: "Success",
@@ -150,6 +153,7 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
         creators,
         newPodcasts: formatPodcasts(newPodcasts),
         popularPodcasts: formatPodcasts(popularPodcasts),
+        liveStreams: liveStreams || [],
       },
     });
   } catch (error) {

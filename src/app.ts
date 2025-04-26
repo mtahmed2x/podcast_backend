@@ -29,6 +29,7 @@ import ReportRouter from "@routers/report";
 import DonationRouter from "@routers/donation";
 import NotificationRouter from "@routers/notification";
 import AnalyticsRouter from "@routers/analytics";
+import LiveStreamRouter from "@routers/liveStream";
 /* Import End */
 
 const app = express();
@@ -72,6 +73,7 @@ app.use("/report", ReportRouter);
 app.use("/donation", DonationRouter);
 app.use("/notification", NotificationRouter);
 app.use("/analytics", AnalyticsRouter);
+app.use("/livestream", LiveStreamRouter);
 
 /* Custom Router End */
 

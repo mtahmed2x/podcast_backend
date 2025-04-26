@@ -22,7 +22,7 @@ export const fileHandler = async (
       { fieldName: "avatar", folder: "profile", key: "avatarUrl" },
       { fieldName: "backgroundImage", folder: "profile", key: "backgroundImageUrl" },
       { fieldName: "categoryImage", folder: "category", key: "categoryImageUrl" },
-      { fieldName: "subcategoryImage", folder: "subcategory", key: "subcategoryImageUrl" },
+      { fieldName: "subCategoryImage", folder: "subCategory", key: "subCategoryImageUrl" },
       { fieldName: "cover", folder: "cover", key: "coverUrl" },
       { fieldName: "audio", folder: "audio", key: "podcastAudioUrl" },
     ];
