@@ -18,6 +18,7 @@ export type PodcastSchema = Document & {
   totalViews: number;
   totalComments: number;
   totalFavorites: number;
+  isAudio: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 };

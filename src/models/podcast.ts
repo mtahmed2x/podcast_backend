@@ -76,6 +76,10 @@ const podcastSchema = new Schema<PodcastSchema>(
       default: 0,
       required: true,
     },
+    isAudio: {
+      type: Boolean,
+      required: true,
+    },
   },
   {
     timestamps: true,

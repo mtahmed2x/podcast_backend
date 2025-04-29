@@ -26,8 +26,16 @@ cloudinary.config({
 });
 
 const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { categoryId, subCategoryId, title, description, location, coverUrl, podcastAudioUrl } =
-    req.body;
+  const {
+    categoryId,
+    subCategoryId,
+    title,
+    description,
+    location,
+    coverUrl,
+    isAudio,
+    podcastAudioUrl,
+  } = req.body;
   const creatorId = req.user.creatorId;
 
   let error, category, subCategory;
@@ -61,6 +69,7 @@ const create = async (req: Request, res: Response, next: NextFunction): Promise<
       audioFormat: audioMetadata.format,
       audioSize: audioMetadata.size,
       audioDuration: audioMetadata.duration,
+      isAudio: isAudio,
     });
 
     await Creator.findByIdAndUpdate(creatorId, { $push: { podcasts: podcast._id } });
