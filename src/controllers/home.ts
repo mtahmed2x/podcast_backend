@@ -66,7 +66,7 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
         },
       },
       { $sort: { totalLikes: -1 } },
-      { $limit: 5 },
+      { $limit: 10 },
       {
         $lookup: {
           from: "creators",
@@ -124,8 +124,8 @@ const homeController = async (req: Request, res: Response, next: NextFunction): 
       return podcasts;
     };
 
-    const newPodcastsPromise = fetchPodcasts("createdAt", 2, true);
-    const popularPodcastsPromise = fetchPodcasts("totalLikes", 3, true);
+    const newPodcastsPromise = fetchPodcasts("createdAt", 10, true);
+    const popularPodcastsPromise = fetchPodcasts("totalLikes", 10, true);
 
     const [categories, admin, creators, newPodcasts, popularPodcasts] = await Promise.all([
       categoriesPromise,
